@@ -1,3 +1,29 @@
+[build]
+  # Skip Netlify builds when only docs/governance files change.
+  # Netlify runs this command; exit 0 => ignore (skip build), exit 1 => build.
+  ignore = """
+    if [ -z \"$CACHED_COMMIT_REF\" ]; then
+      exit 1
+    fi
+
+    CHANGED=\"$(git diff --name-only \"$CACHED_COMMIT_REF\" \"$COMMIT_REF\")\"
+
+    # No changed files => nothing to build.
+    if [ -z \"$CHANGED\" ]; then
+      exit 0
+    fi
+
+    # Skip only when *all* changed files are docs/governance paths.
+    # If any file falls outside these patterns, build.
+    NON_IGNORABLE=\"$(echo \"$CHANGED\" | grep -Ev '^(\\.cursor/|\\.agents/|README\\.md$|.*\\.md$)' || true)\"
+    if [ -z \"$NON_IGNORABLE\" ]; then
+      exit 0
+    fi
+
+    # Default to building (safer) for mixed/uncertain changes.
+    exit 1
+  """
+
 [[redirects]]
   from = "/api/*"
   to = "https://classes.cornell.edu/api/2.0/:splat"
