@@ -53,6 +53,7 @@ Reference: Netlify proxies/rewrites docs: `https://docs.netlify.com/manage/routi
 - Rules live in `.cursor/rules/*.mdc` (architecture, shadcn guardrails, proxy-only API access, TS/React quality).
 - Project workflow skill: `.cursor/skills/gpa-frontend-workflow/SKILL.md`.
 - Hook: `.cursor/hooks/enforce-bun-only.sh` helps catch `npm`/`pnpm`/`yarn` usage (Bun-only repo).
+- Non-Cursor agents should follow `AGENTS.md`, which routes them to the same Cursor rules/skills as canonical policy.
 
 
 ## React Compiler
