@@ -4,22 +4,28 @@ overview: Set up a maintainable client-only Vite React app foundation for the Co
 todos:
   - id: setup-tailwind-shadcn
     content: Configure Tailwind v4 + shadcn for existing Vite React TS app with proper aliases and component directories.
-    status: pending
+    status: completed
   - id: scaffold-routing-query
     content: Set up wouter routing and React Query provider with base app shell for GPA-first flow.
-    status: pending
+    status: completed
   - id: add-proxy-api-layer
     content: Add Netlify proxy config and typed Cornell roster API client/hooks with cache-by-roster-subject strategy.
-    status: pending
+    status: completed
   - id: build-gpa-v1
     content: Implement roster+subject selection, fuzzy course picking, grade input, and Cornell 4.3 GPA calculator behavior.
-    status: pending
+    status: completed
   - id: add-cursor-governance
     content: Create Cursor rules, project skill, and hooks to enforce architecture, shadcn guardrails, and proxy usage.
+    status: completed
+  - id: add-react-typescript-quality-rule
+    content: Add the planned `.cursor/rules/react-typescript-quality.mdc` rule (or adjust plan to reflect the replacement rule if intentionally renamed).
+    status: completed
+  - id: netlify-smoke-test
+    content: Smoke test deployed Netlify app to confirm `/api/*` proxy works and the GPA flow functions end-to-end in production.
     status: pending
   - id: verify-and-document
     content: Run quality checks, validate mobile responsiveness, and document setup/behavior in README.
-    status: pending
+    status: completed
 isProject: false
 ---
 

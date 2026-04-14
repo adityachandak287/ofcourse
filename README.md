@@ -18,6 +18,14 @@ bun run lint
 bun run build
 ```
 
+## Project structure
+
+- `src/pages/**`: route-level composition (wouter routes render these)
+- `src/features/**`: app feature logic (React Query hooks, adapters, UI helpers)
+- `src/lib/**`: pure logic (no React imports) — GPA math, grade mappings, API client types
+- `src/components/ui/**`: shadcn primitives (generated)
+- `src/components/**`: app components (composition/wrappers around primitives)
+
 ## UI stack (Tailwind + shadcn)
 
 - Tailwind v4 via `@tailwindcss/vite`
@@ -39,6 +47,12 @@ Reference: Netlify proxies/rewrites docs: `https://docs.netlify.com/manage/routi
 
 - Letter grades use Cornell’s **4.3 scale** (A+ = 4.3).
 - `S/U` grades are **excluded** from GPA.
+
+## Cursor governance (rules + skill + hooks)
+
+- Rules live in `.cursor/rules/*.mdc` (architecture, shadcn guardrails, proxy-only API access, TS/React quality).
+- Project workflow skill: `.cursor/skills/gpa-frontend-workflow/SKILL.md`.
+- Hook: `.cursor/hooks/enforce-bun-only.sh` helps catch `npm`/`pnpm`/`yarn` usage (Bun-only repo).
 
 
 ## React Compiler

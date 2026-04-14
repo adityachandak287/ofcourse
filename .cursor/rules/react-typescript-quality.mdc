@@ -1,0 +1,31 @@
+---
+description: React + TypeScript quality rules (types, queries, state, a11y)
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# React + TypeScript quality
+
+## TypeScript
+
+- Prefer **precise types** over `any`. If you must escape-hatch, use `unknown` and narrow.
+- Keep non-UI logic **pure** and isolated (put math/mappings in `src/lib/**` with no React imports).
+- Avoid “stringly-typed” state blobs; model state with small types/unions when it helps correctness.
+- Prefer `readonly` inputs for pure helpers.
+
+## React state & rendering
+
+- Avoid derived state when it can be computed from source-of-truth + `useMemo`.
+- Keep components small; extract helpers/components instead of growing a single file indefinitely.
+- Handle loading/error/empty states explicitly for data-driven UI.
+
+## React Query
+
+- Keep query keys **stable** and typed (prefer `as const` keys).
+- Ensure query functions accept `AbortSignal` and pass it through to `fetch` when possible.
+- Prefer a single “query options” helper per resource and reuse it across hooks/callers.
+
+## Accessibility basics
+
+- Every input should have an associated `label` (via `htmlFor` + `id`).
+- Prefer semantic elements and avoid click handlers on non-interactive elements.

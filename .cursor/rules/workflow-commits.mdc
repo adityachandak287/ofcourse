@@ -11,6 +11,30 @@ alwaysApply: true
 - The message should be **1-2 lines**, explaining **why** the change exists, not a file-by-file summary.
 - Include **key constraints** when relevant (Bun-only, shadcn preset, Netlify proxy, no edits to `src/components/ui/*`).
 
+## Commit message format (Conventional Commits)
+
+When proposing or creating commits, use **Conventional Commits**:
+
+- Format: `<type>(<scope>): <summary>`
+- `type` should be one of: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `style`, `revert`
+- Keep the subject imperative and concise.
+- Use a scope when it adds clarity (e.g. `cursor`, `gpa`, `api`, `ui`, `app`).
+
+Examples:
+
+- `feat(gpa): add grade selector and weighted GPA summary`
+- `fix(api): route roster requests through /api proxy`
+- `chore(cursor): add rule for commit message conventions`
+
+## Required attribution trailers (when committing)
+
+When you actually create a commit (only when the user asks), append these trailers at the **very end** of the commit message:
+
+```
+Co-authored-by: cursoragent <cursoragent@cursor.com>
+Made-with: Cursor
+```
+
 ## Safety constraints
 
 - **Do not create commits automatically.** Only commit when the user explicitly asks.
