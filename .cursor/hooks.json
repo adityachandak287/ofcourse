@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": ".cursor/hooks/enforce-bun-only.sh",
+        "matcher": "(^|\\s)(npm|npx|pnpm|yarn)(\\s|$)",
+        "failClosed": false,
+        "timeout": 5
+      }
+    ]
+  }
+}
+

@@ -1,0 +1,14 @@
+---
+description: Frontend architecture conventions (Vite SPA)
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend architecture
+
+- **Pages** live under `src/pages/**` and should focus on composition and route wiring.
+- **Feature logic** lives under `src/features/**` (query hooks, state, adapters).
+- **Pure logic** lives under `src/lib/**` (no React imports).
+- Prefer small components and extracted helpers over large page files.
+- Routing is `wouter` only. **No router state passing** between routes.
+

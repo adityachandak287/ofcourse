@@ -1,0 +1,15 @@
+---
+description: shadcn + Tailwind guardrails (do not edit generated ui components directly)
+globs: src/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# shadcn + Tailwind guardrails
+
+- Styling is **Tailwind + shadcn only**.
+- **Do not edit** `src/components/ui/*` directly for customization. Customize via:
+  - wrappers in `src/components/**`
+  - composition (preferred)
+  - theme/tokens in `src/index.css`
+- Use semantic tokens (`bg-background`, `text-muted-foreground`, etc.), avoid raw colors unless unavoidable.
+

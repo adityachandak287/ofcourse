@@ -1,11 +1,45 @@
-# React + TypeScript + Vite
+# ofcourse
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Client-side only GPA calculator + course tooling for Cornell students.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This project uses **Bun**.
+
+```bash
+bun install
+bun run dev
+```
+
+## Build & checks
+
+```bash
+bun run lint
+bun run build
+```
+
+## UI stack (Tailwind + shadcn)
+
+- Tailwind v4 via `@tailwindcss/vite`
+- shadcn initialized with preset `bd1jr62c`
+- shadcn components live in `src/components/ui/*`
+  - do not customize these files directly; prefer composition/wrappers or theme tokens in `src/index.css`
+
+## Cornell Roster API + Netlify proxy
+
+Cornell’s roster API does not provide CORS headers. The app calls the proxy path:
+
+- `GET /api/search/classes.json?roster=SP26&subject=CS`
+
+On Netlify, this is proxied to the Cornell API origin using [`netlify.toml`](netlify.toml).
+
+Reference: Netlify proxies/rewrites docs: `https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/`
+
+## GPA policy (Cornell 4.3 scale)
+
+- Letter grades use Cornell’s **4.3 scale** (A+ = 4.3).
+- `S/U` grades are **excluded** from GPA.
+
 
 ## React Compiler
 

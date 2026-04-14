@@ -1,0 +1,12 @@
+---
+description: Cornell API access must go through Netlify proxy
+globs: src/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Netlify proxy + Cornell API
+
+- The Cornell Roster API does not provide CORS headers.
+- All calls must go through the Netlify proxy path: **`/api/*`**.
+- Never fetch `https://classes.cornell.edu/...` directly from the browser code.
+
