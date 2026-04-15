@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { toast } from "sonner"
+import { useSearchParams } from "wouter"
 
 import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
 import { useCornellClassesByRosterAndSubjectQuery } from "@/features/courses/queries"
@@ -32,6 +33,7 @@ import { computeCornellGpa43, type GpaCourseInput } from "@/lib/gpa/computeGpa"
 import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
 
 const DEFAULT_ROSTER = "SP26"
+const DEFAULT_SUBJECT = "CS"
 const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses"
 
 type StoredSelectedCourseRow = {
@@ -43,6 +45,10 @@ type StoredSelectedCourseRow = {
 
 function getSelectedCoursesStorageKey(roster: string) {
   return `${SELECTED_COURSES_STORAGE_PREFIX}:${roster}`
+}
+
+function normalizeRoster(input: string) {
+  return input.trim().toUpperCase()
 }
 
 function isCourseGrade(value: unknown): value is CourseGrade {
@@ -121,9 +127,24 @@ function normalizeSubject(input: string) {
   return input.trim().toUpperCase().replaceAll(/\s+/g, "")
 }
 
+function getCourseFiltersFromSearchParams(params: URLSearchParams) {
+  const rosterFromParams = normalizeRoster(params.get("roster") ?? "")
+  const subjectFromParams = normalizeSubject(params.get("subject") ?? "")
+
+  return {
+    roster: rosterFromParams || DEFAULT_ROSTER,
+    subjectInput: subjectFromParams || DEFAULT_SUBJECT,
+  }
+}
+
 export function GpaPage() {
-  const [roster, setRoster] = React.useState<string>(DEFAULT_ROSTER)
-  const [subjectInput, setSubjectInput] = React.useState<string>("CS")
+  const [searchParams, setSearchParams] = useSearchParams()
+  const initialCourseFilters = React.useMemo(
+    () => getCourseFiltersFromSearchParams(searchParams),
+    [searchParams]
+  )
+  const [roster, setRoster] = React.useState<string>(initialCourseFilters.roster)
+  const [subjectInput, setSubjectInput] = React.useState<string>(initialCourseFilters.subjectInput)
   const subject = normalizeSubject(subjectInput)
 
   const [coursePickerOpen, setCoursePickerOpen] = React.useState(false)
@@ -158,6 +179,26 @@ export function GpaPage() {
     }))
     return computeCornellGpa43(inputs)
   }, [selectedCourses])
+
+  React.useEffect(() => {
+    const normalizedRoster = normalizeRoster(roster)
+    const normalizedSubject = normalizeSubject(subjectInput)
+    const nextSearchParams = new URLSearchParams(searchParams)
+
+    nextSearchParams.set("roster", normalizedRoster)
+    nextSearchParams.set("subject", normalizedSubject)
+
+    if (nextSearchParams.toString() !== searchParams.toString()) {
+      setSearchParams(nextSearchParams, { replace: true })
+    }
+  }, [roster, searchParams, subjectInput, setSearchParams])
+
+  React.useEffect(() => {
+    const nextFilters = getCourseFiltersFromSearchParams(searchParams)
+
+    setRoster((prev) => (prev === nextFilters.roster ? prev : nextFilters.roster))
+    setSubjectInput((prev) => (prev === nextFilters.subjectInput ? prev : nextFilters.subjectInput))
+  }, [searchParams])
 
   React.useEffect(() => {
     const storageKey = getSelectedCoursesStorageKey(roster)
@@ -243,7 +284,7 @@ export function GpaPage() {
                 <Input
                   id="roster"
                   value={roster}
-                  onChange={(e) => setRoster(e.target.value.trim().toUpperCase())}
+                  onChange={(e) => setRoster(normalizeRoster(e.target.value))}
                   placeholder="SP26"
                 />
               </div>
@@ -252,7 +293,7 @@ export function GpaPage() {
                 <Input
                   id="subject"
                   value={subjectInput}
-                  onChange={(e) => setSubjectInput(e.target.value)}
+                  onChange={(e) => setSubjectInput(normalizeSubject(e.target.value))}
                   placeholder="CS"
                 />
               </div>
