@@ -25,6 +25,9 @@
 .logo {
   width: 1.5rem;
   height: 1.5rem;
+  background-color: var(--foreground);
+  mask: url("/logo.svg") center / contain no-repeat;
+  -webkit-mask: url("/logo.svg") center / contain no-repeat;
 }
 
 .title {

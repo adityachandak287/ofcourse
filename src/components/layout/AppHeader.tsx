@@ -16,7 +16,7 @@ export function AppHeader({ theme, onThemeChange }: AppHeaderProps) {
     <header className={styles.header}>
       <div className={styles.inner}>
         <div className={styles.brand}>
-          <img src="/logo.svg" alt="ofcourse logo" className={styles.logo} />
+          <span className={styles.logo} aria-hidden />
           <div className={styles.title}>ofcourse</div>
         </div>
         <nav className={styles.nav} aria-label="Primary">
@@ -30,11 +30,10 @@ export function AppHeader({ theme, onThemeChange }: AppHeaderProps) {
             aria-label="Toggle dark mode"
           >
             {theme === "dark" ? (
-              <MoonIcon data-icon="inline-start" />
+              <MoonIcon />
             ) : (
-              <SunIcon data-icon="inline-start" />
+              <SunIcon />
             )}
-            {theme === "dark" ? "Dark" : "Light"}
           </Toggle>
         </nav>
       </div>
