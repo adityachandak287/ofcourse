@@ -9,7 +9,14 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Select,
   SelectContent,
@@ -231,73 +238,85 @@ export function GpaPage() {
                   Add a course above to start calculating.
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {selectedCourses.map((c) => {
-                    return (
-                      <div
-                        key={c.key}
-                        className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-medium">
-                            {formatCornellCourseLabel(c.course)}
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>Credits</span>
-                            <InputGroup className="h-8 w-20 text-xs">
-                              <InputGroupInput
-                                type="number"
-                                inputMode="decimal"
-                                min={0.5}
-                                step={0.5}
-                                value={String(c.credits)}
-                                onChange={(event) => updateCourseCredits(c.key, event.target.value)}
-                                aria-label="Override credits"
-                              />
-                              <InputGroupAddon align="inline-end">
-                                <PencilIcon />
-                              </InputGroupAddon>
-                            </InputGroup>
-                            {!c.course.enrollGroups?.length ? (
-                              <span>(defaulted)</span>
-                            ) : null}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Select
-                            value={c.grade}
-                            onValueChange={(value) => {
-                              setSelectedCourses((prev) =>
-                                prev.map((x) => (x.key === c.key ? { ...x, grade: value as CourseGrade } : x))
-                              )
-                            }}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue placeholder="Grade" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {GRADE_OPTIONS.map((g) => (
-                                <SelectItem key={g} value={g}>
-                                  {g}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeCourse(c.key)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Credits</TableHead>
+                      <TableHead>Grade</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {selectedCourses.map((c) => {
+                      return (
+                        <TableRow key={c.key}>
+                          <TableCell>
+                            <div className="flex min-w-0 flex-col gap-1">
+                              <div className="truncate text-sm font-medium">
+                                {formatCornellCourseLabel(c.course)}
+                              </div>
+                              {!c.course.enrollGroups?.length ? (
+                                <div className="text-xs text-muted-foreground">(defaulted)</div>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <InputGroup className="h-8 w-20 text-xs">
+                                <InputGroupInput
+                                  type="number"
+                                  inputMode="decimal"
+                                  min={0.5}
+                                  step={0.5}
+                                  value={String(c.credits)}
+                                  onChange={(event) => updateCourseCredits(c.key, event.target.value)}
+                                  aria-label="Override credits"
+                                />
+                                <InputGroupAddon align="inline-end">
+                                  <PencilIcon />
+                                </InputGroupAddon>
+                              </InputGroup>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={c.grade}
+                              onValueChange={(value) => {
+                                setSelectedCourses((prev) =>
+                                  prev.map((x) =>
+                                    x.key === c.key ? { ...x, grade: value as CourseGrade } : x
+                                  )
+                                )
+                              }}
+                            >
+                              <SelectTrigger className="w-28">
+                                <SelectValue placeholder="Grade" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {GRADE_OPTIONS.map((g) => (
+                                  <SelectItem key={g} value={g}>
+                                    {g}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeCourse(c.key)}
+                            >
+                              Remove
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
               )}
 
               <div className="text-xs text-muted-foreground">
