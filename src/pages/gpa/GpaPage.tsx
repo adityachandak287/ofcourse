@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {
   Command,
@@ -23,7 +22,11 @@ import { toast } from "sonner"
 import { useSearchParams } from "wouter"
 
 import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
-import { useCornellClassesByRosterAndSubjectQuery } from "@/features/courses/queries"
+import {
+  useCornellClassesByRosterAndSubjectQuery,
+  useCornellRostersQuery,
+  useCornellSubjectsByRosterQuery,
+} from "@/features/courses/queries"
 import { formatCornellCourseLabel, getCornellCourseCredits } from "@/features/courses/courseLabel"
 import {
   SelectedCoursesTable,
@@ -149,6 +152,13 @@ export function GpaPage() {
 
   const [coursePickerOpen, setCoursePickerOpen] = React.useState(false)
   const [courseSearch, setCourseSearch] = React.useState("")
+  const [rosterPickerOpen, setRosterPickerOpen] = React.useState(false)
+  const [rosterSearch, setRosterSearch] = React.useState("")
+  const [subjectPickerOpen, setSubjectPickerOpen] = React.useState(false)
+  const [subjectSearch, setSubjectSearch] = React.useState("")
+  const [hasRequestedRosters, setHasRequestedRosters] = React.useState(false)
+  const [hasRequestedSubjectsByRoster, setHasRequestedSubjectsByRoster] =
+    React.useState<Record<string, boolean>>({})
 
   const [selectedCourses, setSelectedCourses] = React.useState<SelectedCourseRow[]>([])
   const [loadedRoster, setLoadedRoster] = React.useState<string | null>(null)
@@ -160,7 +170,18 @@ export function GpaPage() {
     enabled: subject.length > 0,
   })
 
+  const rostersQuery = useCornellRostersQuery({
+    enabled: hasRequestedRosters,
+  })
+
+  const subjectsQuery = useCornellSubjectsByRosterQuery({
+    roster,
+    enabled: hasRequestedSubjectsByRoster[roster] === true,
+  })
+
   const courses = React.useMemo(() => classesQuery.data?.classes ?? [], [classesQuery.data])
+  const rosters = React.useMemo(() => rostersQuery.data?.rosters ?? [], [rostersQuery.data])
+  const subjects = React.useMemo(() => subjectsQuery.data?.subjects ?? [], [subjectsQuery.data])
 
   const filteredCourses = React.useMemo(() => {
     const q = courseSearch.trim().toLowerCase()
@@ -280,22 +301,152 @@ export function GpaPage() {
           <div className="flex flex-col gap-6">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="roster">Roster</Label>
-                <Input
-                  id="roster"
-                  value={roster}
-                  onChange={(e) => setRoster(normalizeRoster(e.target.value))}
-                  placeholder="SP26"
-                />
+                <Label>Roster</Label>
+                <Popover
+                  open={rosterPickerOpen}
+                  onOpenChange={(open) => {
+                    setRosterPickerOpen(open)
+                    if (open) setHasRequestedRosters(true)
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between">
+                      {roster || DEFAULT_ROSTER}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        value={rosterSearch}
+                        onValueChange={setRosterSearch}
+                        placeholder="Search roster..."
+                      />
+                      <CommandList>
+                        {rostersQuery.isLoading ? (
+                          <CommandGroup>
+                            <CommandItem disabled value="loading-rosters">
+                              Loading rosters...
+                            </CommandItem>
+                          </CommandGroup>
+                        ) : null}
+
+                        {rostersQuery.isError ? (
+                          <CommandGroup>
+                            <CommandItem disabled value="rosters-error">
+                              Failed to load rosters.
+                            </CommandItem>
+                            <CommandItem
+                              value="retry-rosters"
+                              onSelect={() => {
+                                void rostersQuery.refetch()
+                              }}
+                            >
+                              Retry
+                            </CommandItem>
+                          </CommandGroup>
+                        ) : null}
+
+                        {!rostersQuery.isLoading && !rostersQuery.isError ? (
+                          <>
+                            <CommandEmpty>No rosters found.</CommandEmpty>
+                            <CommandGroup heading="Rosters">
+                              {rosters.map((option) => (
+                                <CommandItem
+                                  key={option.slug}
+                                  value={`${option.slug} ${option.descr}`}
+                                  onSelect={() => {
+                                    setRoster(normalizeRoster(option.slug))
+                                    setRosterPickerOpen(false)
+                                    setRosterSearch("")
+                                  }}
+                                >
+                                  <span className="font-medium">{option.slug}</span>
+                                  <span className="ml-2 text-muted-foreground">{option.descr}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </>
+                        ) : null}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input
-                  id="subject"
-                  value={subjectInput}
-                  onChange={(e) => setSubjectInput(normalizeSubject(e.target.value))}
-                  placeholder="CS"
-                />
+                <Label>Subject</Label>
+                <Popover
+                  open={subjectPickerOpen}
+                  onOpenChange={(open) => {
+                    setSubjectPickerOpen(open)
+                    if (!open) return
+                    setHasRequestedSubjectsByRoster((prev) => ({
+                      ...prev,
+                      [roster]: true,
+                    }))
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="outline" className="w-full justify-between">
+                      {subject || DEFAULT_SUBJECT}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput
+                        value={subjectSearch}
+                        onValueChange={setSubjectSearch}
+                        placeholder="Search subject..."
+                      />
+                      <CommandList>
+                        {subjectsQuery.isLoading ? (
+                          <CommandGroup>
+                            <CommandItem disabled value="loading-subjects">
+                              Loading subjects...
+                            </CommandItem>
+                          </CommandGroup>
+                        ) : null}
+
+                        {subjectsQuery.isError ? (
+                          <CommandGroup>
+                            <CommandItem disabled value="subjects-error">
+                              Failed to load subjects.
+                            </CommandItem>
+                            <CommandItem
+                              value="retry-subjects"
+                              onSelect={() => {
+                                void subjectsQuery.refetch()
+                              }}
+                            >
+                              Retry
+                            </CommandItem>
+                          </CommandGroup>
+                        ) : null}
+
+                        {!subjectsQuery.isLoading && !subjectsQuery.isError ? (
+                          <>
+                            <CommandEmpty>No subjects found.</CommandEmpty>
+                            <CommandGroup heading={`Subjects for ${roster}`}>
+                              {subjects.map((option) => (
+                                <CommandItem
+                                  key={option.value}
+                                  value={`${option.value} ${option.descr}`}
+                                  onSelect={() => {
+                                    setSubjectInput(normalizeSubject(option.value))
+                                    setSubjectPickerOpen(false)
+                                    setSubjectSearch("")
+                                  }}
+                                >
+                                  <span className="font-medium">{option.value}</span>
+                                  <span className="ml-2 text-muted-foreground">{option.descr}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </>
+                        ) : null}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
