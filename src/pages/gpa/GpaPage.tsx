@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { toast } from "sonner"
 
 import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
 import { useCornellClassesByRosterAndSubjectQuery } from "@/features/courses/queries"
@@ -28,9 +29,93 @@ import {
   type SelectedCourseRow,
 } from "@/features/gpa/components/SelectedCoursesTable"
 import { computeCornellGpa43, type GpaCourseInput } from "@/lib/gpa/computeGpa"
-import { type CourseGrade } from "@/lib/gpa/grades"
+import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
 
 const DEFAULT_ROSTER = "SP26"
+const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses"
+
+type StoredSelectedCourseRow = {
+  key: string
+  course: CornellClassSummary
+  credits: number
+  grade: CourseGrade
+}
+
+function getSelectedCoursesStorageKey(roster: string) {
+  return `${SELECTED_COURSES_STORAGE_PREFIX}:${roster}`
+}
+
+function isCourseGrade(value: unknown): value is CourseGrade {
+  return typeof value === "string" && GRADE_OPTIONS.includes(value as CourseGrade)
+}
+
+function isCornellClassSummary(value: unknown): value is CornellClassSummary {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false
+  const maybeCourse = value as Record<string, unknown>
+
+  if (maybeCourse.crseId !== undefined && typeof maybeCourse.crseId !== "number") return false
+  if (maybeCourse.crseOfferNbr !== undefined && typeof maybeCourse.crseOfferNbr !== "number") return false
+  if (maybeCourse.subject !== undefined && typeof maybeCourse.subject !== "string") return false
+  if (maybeCourse.catalogNbr !== undefined && typeof maybeCourse.catalogNbr !== "string") return false
+  if (maybeCourse.titleShort !== undefined && typeof maybeCourse.titleShort !== "string") return false
+  if (maybeCourse.titleLong !== undefined && typeof maybeCourse.titleLong !== "string") return false
+
+  if (maybeCourse.enrollGroups !== undefined) {
+    if (!Array.isArray(maybeCourse.enrollGroups)) return false
+    for (const enrollGroup of maybeCourse.enrollGroups) {
+      if (!enrollGroup || typeof enrollGroup !== "object" || Array.isArray(enrollGroup)) return false
+      const maybeEnrollGroup = enrollGroup as Record<string, unknown>
+      if (
+        maybeEnrollGroup.unitsMinimum !== undefined &&
+        typeof maybeEnrollGroup.unitsMinimum !== "number"
+      ) {
+        return false
+      }
+      if (
+        maybeEnrollGroup.unitsMaximum !== undefined &&
+        typeof maybeEnrollGroup.unitsMaximum !== "number"
+      ) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+function parseStoredSelectedCourses(value: string | null): SelectedCourseRow[] | null {
+  if (!value) return []
+
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (!Array.isArray(parsed)) return null
+
+    const nextCourses: SelectedCourseRow[] = []
+    for (const item of parsed) {
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null
+      const maybeRow = item as Record<string, unknown>
+      const candidate: StoredSelectedCourseRow = {
+        key: maybeRow.key as string,
+        course: maybeRow.course as CornellClassSummary,
+        credits: maybeRow.credits as number,
+        grade: maybeRow.grade as CourseGrade,
+      }
+
+      if (typeof candidate.key !== "string") return null
+      if (!isCornellClassSummary(candidate.course)) return null
+      if (typeof candidate.credits !== "number" || !Number.isFinite(candidate.credits) || candidate.credits <= 0) {
+        return null
+      }
+      if (!isCourseGrade(candidate.grade)) return null
+
+      nextCourses.push(candidate)
+    }
+
+    return nextCourses
+  } catch {
+    return null
+  }
+}
 
 function normalizeSubject(input: string) {
   return input.trim().toUpperCase().replaceAll(/\s+/g, "")
@@ -45,6 +130,8 @@ export function GpaPage() {
   const [courseSearch, setCourseSearch] = React.useState("")
 
   const [selectedCourses, setSelectedCourses] = React.useState<SelectedCourseRow[]>([])
+  const [loadedRoster, setLoadedRoster] = React.useState<string | null>(null)
+  const hasLoadedRosterRef = React.useRef<Record<string, boolean>>({})
 
   const classesQuery = useCornellClassesByRosterAndSubjectQuery({
     roster,
@@ -71,6 +158,38 @@ export function GpaPage() {
     }))
     return computeCornellGpa43(inputs)
   }, [selectedCourses])
+
+  React.useEffect(() => {
+    const storageKey = getSelectedCoursesStorageKey(roster)
+    const parsedCourses = parseStoredSelectedCourses(localStorage.getItem(storageKey))
+
+    if (parsedCourses == null) {
+      setSelectedCourses([])
+      setLoadedRoster(roster)
+      return
+    }
+
+    setSelectedCourses(parsedCourses)
+    setLoadedRoster(roster)
+
+    const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster]
+    hasLoadedRosterRef.current[roster] = true
+
+    if (isFirstLoadForRoster && parsedCourses.length > 0) {
+      setTimeout(() => {
+        toast.info("Loaded saved courses from this device.", {
+            description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
+          })
+      }, 0)
+    }
+  }, [roster])
+
+  React.useEffect(() => {
+    if (loadedRoster !== roster) return
+
+    const storageKey = getSelectedCoursesStorageKey(roster)
+    localStorage.setItem(storageKey, JSON.stringify(selectedCourses))
+  }, [loadedRoster, roster, selectedCourses])
 
   function addCourse(course: CornellClassSummary) {
     const key =

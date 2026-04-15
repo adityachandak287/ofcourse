@@ -2,6 +2,7 @@ import * as React from "react"
 import { Route, Switch } from "wouter"
 
 import { AppHeader } from "@/components/layout/AppHeader"
+import { Toaster } from "@/components/ui/sonner"
 import { GpaPage } from "@/pages/gpa/GpaPage"
 import { NotFoundPage } from "@/pages/not-found/NotFoundPage"
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/" component={GpaPage} />
         <Route component={NotFoundPage} />
       </Switch>
+      <Toaster position="bottom-right" />
     </div>
   )
 }
