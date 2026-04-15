@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: verify-integrity
     content: Confirm endpoint coverage vs examples.md and ensure proxy-only calls with minimal payload usage.
-    status: pending
+    status: completed
 isProject: false
 ---
 
