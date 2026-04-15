@@ -1,9 +1,15 @@
 import * as React from "react"
+import { PencilIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -99,6 +105,16 @@ export function GpaPage() {
 
   function removeCourse(key: string) {
     setSelectedCourses((prev) => prev.filter((c) => c.key !== key))
+  }
+
+  function updateCourseCredits(key: string, value: string) {
+    if (!value) return
+    const parsed = Number.parseFloat(value)
+    if (!Number.isFinite(parsed) || parsed <= 0) return
+
+    setSelectedCourses((prev) =>
+      prev.map((course) => (course.key === key ? { ...course, credits: parsed } : course))
+    )
   }
 
   return (
@@ -226,10 +242,24 @@ export function GpaPage() {
                           <div className="truncate text-sm font-medium">
                             {formatCornellCourseLabel(c.course)}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            Credits: <span className="tabular-nums">{c.credits}</span>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>Credits</span>
+                            <InputGroup className="h-8 w-20 text-xs">
+                              <InputGroupInput
+                                type="number"
+                                inputMode="decimal"
+                                min={0.5}
+                                step={0.5}
+                                value={String(c.credits)}
+                                onChange={(event) => updateCourseCredits(c.key, event.target.value)}
+                                aria-label="Override credits"
+                              />
+                              <InputGroupAddon align="inline-end">
+                                <PencilIcon />
+                              </InputGroupAddon>
+                            </InputGroup>
                             {!c.course.enrollGroups?.length ? (
-                              <span className="ml-2">(defaulted)</span>
+                              <span>(defaulted)</span>
                             ) : null}
                           </div>
                         </div>

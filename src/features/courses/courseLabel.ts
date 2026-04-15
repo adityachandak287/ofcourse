@@ -3,7 +3,7 @@ import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
 export function formatCornellCourseLabel(course: CornellClassSummary): string {
   const subject = course.subject ?? "—"
   const catalogNbr = course.catalogNbr ?? "—"
-  const title = course.titleShort ?? course.titleLong ?? "Untitled"
+  const title = course.titleLong ?? course.titleShort ?? "Untitled"
   return `${subject} ${catalogNbr} — ${title}`
 }
 
