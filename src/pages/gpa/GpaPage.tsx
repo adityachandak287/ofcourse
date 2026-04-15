@@ -27,7 +27,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-import type { CornellRosterClass } from "@/lib/api/cornellRosterTypes"
+import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
 import { useCornellClassesByRosterAndSubjectQuery } from "@/features/courses/queries"
 import { formatCornellCourseLabel, getCornellCourseCredits } from "@/features/courses/courseLabel"
 import { computeCornellGpa43, type GpaCourseInput } from "@/lib/gpa/computeGpa"
@@ -35,7 +35,7 @@ import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
 
 type SelectedCourse = {
   key: string
-  course: CornellRosterClass
+  course: CornellClassSummary
   credits: number
   grade: CourseGrade
 }
@@ -62,10 +62,7 @@ export function GpaPage() {
     enabled: subject.length > 0,
   })
 
-  const courses = React.useMemo(
-    () => classesQuery.data?.data.classes ?? [],
-    [classesQuery.data]
-  )
+  const courses = React.useMemo(() => classesQuery.data?.classes ?? [], [classesQuery.data])
 
   const filteredCourses = React.useMemo(() => {
     const q = courseSearch.trim().toLowerCase()
@@ -85,7 +82,7 @@ export function GpaPage() {
     return computeCornellGpa43(inputs)
   }, [selectedCourses])
 
-  function addCourse(course: CornellRosterClass) {
+  function addCourse(course: CornellClassSummary) {
     const key =
       (course.crseId && course.crseOfferNbr != null
         ? `${course.crseId}-${course.crseOfferNbr}`
@@ -285,4 +282,3 @@ export function GpaPage() {
     </div>
   )
 }
-

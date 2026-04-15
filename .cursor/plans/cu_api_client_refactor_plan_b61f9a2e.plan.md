@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: migrate-consumers
     content: Update current callers and query hooks to use the new types and return shapes; remove redundant type files if unused.
-    status: pending
+    status: completed
   - id: verify-integrity
     content: Confirm endpoint coverage vs examples.md and ensure proxy-only calls with minimal payload usage.
     status: pending
