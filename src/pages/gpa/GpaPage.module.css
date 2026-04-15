@@ -9,3 +9,23 @@
   white-space: normal;
   word-break: break-word;
 }
+
+.creditsHead,
+.creditsCell {
+  width: 20%;
+}
+
+.gradeHead,
+.gradeCell {
+  width: 20%;
+}
+
+.actionsHead,
+.actionsCell {
+  width: 10%;
+  text-align: right;
+}
+
+.gradeTrigger {
+  width: 100%;
+}

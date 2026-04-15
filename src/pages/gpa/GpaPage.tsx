@@ -1,13 +1,9 @@
 import * as React from "react"
-import { PencilIcon } from "lucide-react"
+import { Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group"
+import { InputGroup, InputGroupInput } from "@/components/ui/input-group"
 import { Label } from "@/components/ui/label"
 import {
   Table,
@@ -244,9 +240,9 @@ export function GpaPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Course</TableHead>
-                      <TableHead>Credits</TableHead>
-                      <TableHead>Grade</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className={styles.creditsHead}>Credits</TableHead>
+                      <TableHead className={styles.gradeHead}>Grade</TableHead>
+                      <TableHead className={styles.actionsHead}>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -263,9 +259,9 @@ export function GpaPage() {
                               ) : null}
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className={styles.creditsCell}>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <InputGroup className="h-8 w-20 text-xs">
+                              <InputGroup className="h-8 w-full text-xs">
                                 <InputGroupInput
                                   type="number"
                                   inputMode="decimal"
@@ -275,13 +271,10 @@ export function GpaPage() {
                                   onChange={(event) => updateCourseCredits(c.key, event.target.value)}
                                   aria-label="Override credits"
                                 />
-                                <InputGroupAddon align="inline-end">
-                                  <PencilIcon />
-                                </InputGroupAddon>
                               </InputGroup>
                             </div>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className={styles.gradeCell}>
                             <Select
                               value={c.grade}
                               onValueChange={(value) => {
@@ -292,7 +285,7 @@ export function GpaPage() {
                                 )
                               }}
                             >
-                              <SelectTrigger className="w-28">
+                              <SelectTrigger className={styles.gradeTrigger}>
                                 <SelectValue placeholder="Grade" />
                               </SelectTrigger>
                               <SelectContent>
@@ -304,14 +297,15 @@ export function GpaPage() {
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className={styles.actionsCell}>
                             <Button
                               type="button"
                               variant="ghost"
-                              size="sm"
+                              size="icon-sm"
                               onClick={() => removeCourse(c.key)}
+                              aria-label="Remove course"
                             >
-                              Remove
+                              <Trash2Icon />
                             </Button>
                           </TableCell>
                         </TableRow>
