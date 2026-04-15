@@ -1,26 +1,10 @@
 import * as React from "react"
-import { Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { InputGroup, InputGroupInput } from "@/components/ui/input-group"
 import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import {
   Command,
@@ -39,17 +23,12 @@ import {
 import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
 import { useCornellClassesByRosterAndSubjectQuery } from "@/features/courses/queries"
 import { formatCornellCourseLabel, getCornellCourseCredits } from "@/features/courses/courseLabel"
+import {
+  SelectedCoursesTable,
+  type SelectedCourseRow,
+} from "@/features/gpa/components/SelectedCoursesTable"
 import { computeCornellGpa43, type GpaCourseInput } from "@/lib/gpa/computeGpa"
-import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
-import styles from "@/pages/gpa/GpaPage.module.css"
-import { Input } from "@/components/ui/input"
-
-type SelectedCourse = {
-  key: string
-  course: CornellClassSummary
-  credits: number
-  grade: CourseGrade
-}
+import { type CourseGrade } from "@/lib/gpa/grades"
 
 const DEFAULT_ROSTER = "SP26"
 
@@ -65,7 +44,7 @@ export function GpaPage() {
   const [coursePickerOpen, setCoursePickerOpen] = React.useState(false)
   const [courseSearch, setCourseSearch] = React.useState("")
 
-  const [selectedCourses, setSelectedCourses] = React.useState<SelectedCourse[]>([])
+  const [selectedCourses, setSelectedCourses] = React.useState<SelectedCourseRow[]>([])
 
   const classesQuery = useCornellClassesByRosterAndSubjectQuery({
     roster,
@@ -119,6 +98,12 @@ export function GpaPage() {
 
     setSelectedCourses((prev) =>
       prev.map((course) => (course.key === key ? { ...course, credits: parsed } : course))
+    )
+  }
+
+  function updateCourseGrade(key: string, grade: CourseGrade) {
+    setSelectedCourses((prev) =>
+      prev.map((course) => (course.key === key ? { ...course, grade } : course))
     )
   }
 
@@ -236,83 +221,12 @@ export function GpaPage() {
                   Add a course above to start calculating.
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Course</TableHead>
-                      <TableHead className={styles.creditsHead}>Credits</TableHead>
-                      <TableHead className={styles.gradeHead}>Grade</TableHead>
-                      <TableHead className={styles.actionsHead}>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedCourses.map((c) => {
-                      return (
-                        <TableRow key={c.key}>
-                          <TableCell className={styles.courseCell}>
-                            <div className="flex min-w-0 flex-col gap-1">
-                              <div className={styles.courseTitle}>
-                                {formatCornellCourseLabel(c.course)}
-                              </div>
-                              {!c.course.enrollGroups?.length ? (
-                                <div className="text-xs text-muted-foreground">(defaulted)</div>
-                              ) : null}
-                            </div>
-                          </TableCell>
-                          <TableCell className={styles.creditsCell}>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <InputGroup className="h-8 w-full text-xs">
-                                <InputGroupInput
-                                  type="number"
-                                  inputMode="decimal"
-                                  min={0.5}
-                                  step={0.5}
-                                  value={String(c.credits)}
-                                  onChange={(event) => updateCourseCredits(c.key, event.target.value)}
-                                  aria-label="Override credits"
-                                />
-                              </InputGroup>
-                            </div>
-                          </TableCell>
-                          <TableCell className={styles.gradeCell}>
-                            <Select
-                              value={c.grade}
-                              onValueChange={(value) => {
-                                setSelectedCourses((prev) =>
-                                  prev.map((x) =>
-                                    x.key === c.key ? { ...x, grade: value as CourseGrade } : x
-                                  )
-                                )
-                              }}
-                            >
-                              <SelectTrigger className={styles.gradeTrigger}>
-                                <SelectValue placeholder="Grade" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {GRADE_OPTIONS.map((g) => (
-                                  <SelectItem key={g} value={g}>
-                                    {g}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell className={styles.actionsCell}>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => removeCourse(c.key)}
-                              aria-label="Remove course"
-                            >
-                              <Trash2Icon />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
+                <SelectedCoursesTable
+                  courses={selectedCourses}
+                  onCreditsChange={updateCourseCredits}
+                  onGradeChange={updateCourseGrade}
+                  onRemove={removeCourse}
+                />
               )}
 
               <div className="text-xs text-muted-foreground">
