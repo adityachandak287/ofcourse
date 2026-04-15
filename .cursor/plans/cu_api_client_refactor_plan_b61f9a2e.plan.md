@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: refactor-client-functions
     content: Introduce a shared fetch helper and update all three API client functions to use the composable types and proxy paths.
-    status: pending
+    status: completed
   - id: migrate-consumers
     content: Update current callers and query hooks to use the new types and return shapes; remove redundant type files if unused.
     status: pending
