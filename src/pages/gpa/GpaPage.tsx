@@ -317,9 +317,6 @@ export function GpaPage() {
                   Failed to load courses. (Check roster/subject, and Netlify proxy on deploy.)
                 </div>
               ) : null}
-              <div className="text-xs text-muted-foreground">
-                Fetches `search/classes.json?roster={roster}&subject={subject}` and caches results client-side.
-              </div>
             </div>
 
             <Separator />
