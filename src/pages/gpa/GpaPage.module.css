@@ -1,0 +1,11 @@
+.courseCell {
+  width: 50%;
+  max-width: 50%;
+}
+
+.courseTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: normal;
+  word-break: break-word;
+}

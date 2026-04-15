@@ -45,6 +45,8 @@ import { useCornellClassesByRosterAndSubjectQuery } from "@/features/courses/que
 import { formatCornellCourseLabel, getCornellCourseCredits } from "@/features/courses/courseLabel"
 import { computeCornellGpa43, type GpaCourseInput } from "@/lib/gpa/computeGpa"
 import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
+import styles from "@/pages/gpa/GpaPage.module.css"
+import { Input } from "@/components/ui/input"
 
 type SelectedCourse = {
   key: string
@@ -251,9 +253,9 @@ export function GpaPage() {
                     {selectedCourses.map((c) => {
                       return (
                         <TableRow key={c.key}>
-                          <TableCell>
+                          <TableCell className={styles.courseCell}>
                             <div className="flex min-w-0 flex-col gap-1">
-                              <div className="truncate text-sm font-medium">
+                              <div className={styles.courseTitle}>
                                 {formatCornellCourseLabel(c.course)}
                               </div>
                               {!c.course.enrollGroups?.length ? (
