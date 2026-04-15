@@ -50,6 +50,12 @@ function getSelectedCoursesStorageKey(roster: string) {
   return `${SELECTED_COURSES_STORAGE_PREFIX}:${roster}`
 }
 
+function getColumnWidthCh(input: { maxCodeLength: number; minCh: number; maxCh: number; paddingCh?: number }) {
+  const paddedLength = input.maxCodeLength + (input.paddingCh ?? 1)
+  const widthCh = Math.min(input.maxCh, Math.max(input.minCh, paddedLength))
+  return `${widthCh}ch`
+}
+
 function normalizeRoster(input: string) {
   return input.trim().toUpperCase()
 }
@@ -180,8 +186,50 @@ export function GpaPage() {
   })
 
   const courses = React.useMemo(() => classesQuery.data?.classes ?? [], [classesQuery.data])
-  const rosters = React.useMemo(() => rostersQuery.data?.rosters ?? [], [rostersQuery.data])
+  const rosters = React.useMemo(
+    () =>
+      [...(rostersQuery.data?.rosters ?? [])].sort((a, b) => {
+        const aShort = a.descrshort ?? ""
+        const bShort = b.descrshort ?? ""
+        return bShort.localeCompare(aShort)
+      }),
+    [rostersQuery.data]
+  )
   const subjects = React.useMemo(() => subjectsQuery.data?.subjects ?? [], [subjectsQuery.data])
+
+  const rosterCodeColumnWidth = React.useMemo(() => {
+    const maxCodeLength = rosters.reduce((max, option) => Math.max(max, option.slug.length), 0)
+    return getColumnWidthCh({
+      maxCodeLength,
+      minCh: 6,
+      maxCh: 10,
+      paddingCh: 1,
+    })
+  }, [rosters])
+
+  const subjectCodeColumnWidth = React.useMemo(() => {
+    const maxCodeLength = subjects.reduce((max, option) => Math.max(max, option.value.length), 0)
+    return getColumnWidthCh({
+      maxCodeLength,
+      minCh: 4,
+      maxCh: 9,
+      paddingCh: 1,
+    })
+  }, [subjects])
+
+  const courseCodeColumnWidth = React.useMemo(() => {
+    const maxCodeLength = courses.reduce((max, option) => {
+      const courseCode = `${option.subject ?? "—"} ${option.catalogNbr ?? "—"}`
+      return Math.max(max, courseCode.length)
+    }, 0)
+
+    return getColumnWidthCh({
+      maxCodeLength,
+      minCh: 8,
+      maxCh: 14,
+      paddingCh: 1,
+    })
+  }, [courses])
 
   const filteredCourses = React.useMemo(() => {
     const q = courseSearch.trim().toLowerCase()
@@ -360,8 +408,13 @@ export function GpaPage() {
                                     setRosterSearch("")
                                   }}
                                 >
-                                  <span className="font-medium">{option.slug}</span>
-                                  <span className="ml-2 text-muted-foreground">{option.descr}</span>
+                                  <span
+                                    className="shrink-0 font-medium tabular-nums"
+                                    style={{ width: rosterCodeColumnWidth }}
+                                  >
+                                    {option.slug}
+                                  </span>
+                                  <span className="text-muted-foreground">{option.descr}</span>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
@@ -429,15 +482,23 @@ export function GpaPage() {
                               {subjects.map((option) => (
                                 <CommandItem
                                   key={option.value}
-                                  value={`${option.value} ${option.descr}`}
+                                  value={`${option.value} ${option.descrformal}`}
+                                  className="items-start"
                                   onSelect={() => {
                                     setSubjectInput(normalizeSubject(option.value))
                                     setSubjectPickerOpen(false)
                                     setSubjectSearch("")
                                   }}
                                 >
-                                  <span className="font-medium">{option.value}</span>
-                                  <span className="ml-2 text-muted-foreground">{option.descr}</span>
+                                  <span
+                                    className="shrink-0 font-medium"
+                                    style={{ width: subjectCodeColumnWidth }}
+                                  >
+                                    {option.value}
+                                  </span>
+                                  <span className="min-w-0 max-w-[12rem] break-words whitespace-normal text-muted-foreground leading-snug sm:max-w-[18rem]">
+                                    {option.descrformal}
+                                  </span>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
@@ -473,26 +534,35 @@ export function GpaPage() {
                     />
                     <CommandList>
                       <CommandEmpty>No courses found.</CommandEmpty>
-                      <CommandGroup heading={`${roster} · ${subject}`}>
-                        {filteredCourses.slice(0, 200).map((c, idx) => {
-                          const key =
-                            (c.crseId && c.crseOfferNbr != null
-                              ? `${c.crseId}-${c.crseOfferNbr}`
+                            <CommandGroup heading={`${roster} · ${subject}`}>
+                              {filteredCourses.slice(0, 200).map((c, idx) => {
+                                const key =
+                                  (c.crseId && c.crseOfferNbr != null
+                                    ? `${c.crseId}-${c.crseOfferNbr}`
                               : `${formatCornellCourseLabel(c)}-${idx}`) || `${idx}`
 
                           return (
                             <CommandItem
                               key={key}
                               value={formatCornellCourseLabel(c)}
+                              className="items-start"
                               onSelect={() => {
                                 addCourse(c)
                                 setCoursePickerOpen(false)
                                 setCourseSearch("")
                               }}
                             >
-                              <div className="flex min-w-0 flex-1 items-center gap-2">
-                                <div className="truncate">{formatCornellCourseLabel(c)}</div>
-                                <div className="ml-auto text-xs text-muted-foreground">
+                              <div className="flex min-w-0 w-full items-center gap-2 overflow-hidden">
+                                <span
+                                  className="shrink-0 whitespace-nowrap font-medium"
+                                  style={{ width: courseCodeColumnWidth }}
+                                >
+                                  {`${c.subject ?? "—"} ${c.catalogNbr ?? "—"}`}
+                                </span>
+                                <div className="min-w-0 max-w-[12rem] flex-1 break-words whitespace-normal text-muted-foreground leading-snug sm:max-w-[18rem]">
+                                  {c.titleLong ?? c.titleShort ?? "Untitled"}
+                                </div>
+                                <div className="w-10 shrink-0 text-right text-xs text-muted-foreground">
                                   {getCornellCourseCredits(c) ?? "—"} cr
                                 </div>
                               </div>

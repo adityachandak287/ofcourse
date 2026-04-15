@@ -22,12 +22,14 @@ export type CornellSubjectCode = string
 export type CornellRosterSummary = {
   slug: CornellRosterCode
   descr: string
+  descrshort?: string
   isDefaultRoster: "Y" | "N"
 }
 
 export type CornellSubjectSummary = {
   value: CornellSubjectCode
   descr: string
+  descrformal: string
 }
 
 export type CornellClassEnrollGroup = {
