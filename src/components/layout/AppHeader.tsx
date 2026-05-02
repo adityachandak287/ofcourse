@@ -1,15 +1,15 @@
-import { MoonIcon, SunIcon } from "lucide-react"
+import { MoonIcon, SunIcon } from "lucide-react";
 
-import { Separator } from "@/components/ui/separator"
-import { Toggle } from "@/components/ui/toggle"
-import styles from "@/components/layout/AppHeader.module.css"
+import { Separator } from "@/components/ui/separator";
+import { Toggle } from "@/components/ui/toggle";
+import styles from "@/components/layout/AppHeader.module.css";
 
-type ThemeMode = "light" | "dark"
+type ThemeMode = "light" | "dark";
 
 type AppHeaderProps = {
-  theme: ThemeMode
-  onThemeChange: (theme: ThemeMode) => void
-}
+  theme: ThemeMode;
+  onThemeChange: (theme: ThemeMode) => void;
+};
 
 export function AppHeader({ theme, onThemeChange }: AppHeaderProps) {
   return (
@@ -29,15 +29,11 @@ export function AppHeader({ theme, onThemeChange }: AppHeaderProps) {
             }
             aria-label="Toggle dark mode"
           >
-            {theme === "dark" ? (
-              <MoonIcon />
-            ) : (
-              <SunIcon />
-            )}
+            {theme === "dark" ? <MoonIcon /> : <SunIcon />}
           </Toggle>
         </nav>
       </div>
       <Separator />
     </header>
-  )
+  );
 }

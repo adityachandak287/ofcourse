@@ -3,6 +3,7 @@
 This repository uses Cursor-native policy files as the single source of truth.
 
 Canonical policy locations:
+
 - `.cursor/rules/*.mdc`
 - `.cursor/skills/**/SKILL.md`
 - `.cursor/hooks.json` and scripts under `.cursor/hooks/` (for shell-command guardrails)
@@ -10,6 +11,7 @@ Canonical policy locations:
 ## Required startup behavior
 
 When working in this repo, non-Cursor agents should:
+
 1. Read all files in `.cursor/rules/` before proposing or applying code changes.
 2. Treat rules with `alwaysApply: true` as global constraints.
 3. Apply glob-scoped rules only when the target files match each rule's `globs`.
@@ -19,6 +21,7 @@ When working in this repo, non-Cursor agents should:
 ## Precedence and conflict handling
 
 Use this precedence order:
+
 1. System/developer/user instructions in the current session.
 2. `.cursor/rules/*` with `alwaysApply: true`.
 3. Matching glob-based `.cursor/rules/*`.

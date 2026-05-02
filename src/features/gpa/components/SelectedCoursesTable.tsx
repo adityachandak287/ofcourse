@@ -1,14 +1,14 @@
-import { Trash2Icon } from "lucide-react"
+import { Trash2Icon } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -16,24 +16,24 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { formatCornellCourseLabel } from "@/features/courses/courseLabel"
-import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
-import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
+} from "@/components/ui/table";
+import { formatCornellCourseLabel } from "@/features/courses/courseLabel";
+import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes";
+import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades";
 
 export type SelectedCourseRow = {
-  key: string
-  course: CornellClassSummary
-  credits: number
-  grade: CourseGrade
-}
+  key: string;
+  course: CornellClassSummary;
+  credits: number;
+  grade: CourseGrade;
+};
 
 type SelectedCoursesTableProps = {
-  courses: readonly SelectedCourseRow[]
-  onCreditsChange: (key: string, value: string) => void
-  onGradeChange: (key: string, grade: CourseGrade) => void
-  onRemove: (key: string) => void
-}
+  courses: readonly SelectedCourseRow[];
+  onCreditsChange: (key: string, value: string) => void;
+  onGradeChange: (key: string, grade: CourseGrade) => void;
+  onRemove: (key: string) => void;
+};
 
 export function SelectedCoursesTable({
   courses,
@@ -62,7 +62,9 @@ export function SelectedCoursesTable({
                   {formatCornellCourseLabel(course.course)}
                 </div>
                 {!course.course.enrollGroups?.length ? (
-                  <div className="text-xs text-muted-foreground">(defaulted)</div>
+                  <div className="text-xs text-muted-foreground">
+                    (defaulted)
+                  </div>
                 ) : null}
               </div>
             </TableCell>
@@ -73,7 +75,9 @@ export function SelectedCoursesTable({
                 min={0.5}
                 step={0.5}
                 value={String(course.credits)}
-                onChange={(event) => onCreditsChange(course.key, event.target.value)}
+                onChange={(event) =>
+                  onCreditsChange(course.key, event.target.value)
+                }
                 className="h-8 px-1 text-center text-sm"
                 aria-label="Override credits"
               />
@@ -81,7 +85,9 @@ export function SelectedCoursesTable({
             <TableCell className="w-16 p-1.5 align-middle">
               <Select
                 value={course.grade}
-                onValueChange={(value) => onGradeChange(course.key, value as CourseGrade)}
+                onValueChange={(value) =>
+                  onGradeChange(course.key, value as CourseGrade)
+                }
               >
                 <SelectTrigger className="h-8 w-full min-w-0 px-1.5 text-sm">
                   <SelectValue placeholder="Grade" />
@@ -110,5 +116,5 @@ export function SelectedCoursesTable({
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }
