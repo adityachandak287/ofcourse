@@ -1,7 +1,13 @@
-import { Link } from "wouter"
+import { Link } from "wouter";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export function NotFoundPage() {
   return (
@@ -9,7 +15,9 @@ export function NotFoundPage() {
       <Card>
         <CardHeader>
           <CardTitle>Page not found</CardTitle>
-          <CardDescription>The page you requested doesn’t exist.</CardDescription>
+          <CardDescription>
+            The page you requested doesn’t exist.
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
           <Button asChild>
@@ -18,6 +26,5 @@ export function NotFoundPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
-

@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest";
 
-import { computeCornellGpa } from "@/lib/gpa/computeGpa"
+import { computeCornellGpa } from "@/lib/gpa/computeGpa";
 
 describe("computeCornellGpa43", () => {
   it("returns null GPA when there are no graded credits", () => {
@@ -8,8 +8,8 @@ describe("computeCornellGpa43", () => {
       gpa: null,
       gradedCredits: 0,
       qualityPoints: 0,
-    })
-  })
+    });
+  });
 
   it("excludes S/U from GPA and credits", () => {
     expect(
@@ -21,8 +21,8 @@ describe("computeCornellGpa43", () => {
       gpa: 4,
       gradedCredits: 3,
       qualityPoints: 12,
-    })
-  })
+    });
+  });
 
   it("computes a weighted average across letter grades", () => {
     // (3 * 4.0 + 1 * 3.0) / 4 = 15 / 4 = 3.75
@@ -31,8 +31,8 @@ describe("computeCornellGpa43", () => {
         { credits: 3, grade: "A" },
         { credits: 1, grade: "B" },
       ]).gpa,
-    ).toBeCloseTo(3.75)
-  })
+    ).toBeCloseTo(3.75);
+  });
 
   it("skips non-positive or non-finite credits", () => {
     expect(
@@ -46,6 +46,6 @@ describe("computeCornellGpa43", () => {
       gpa: 4,
       gradedCredits: 3,
       qualityPoints: 12,
-    })
-  })
-})
+    });
+  });
+});
