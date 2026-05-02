@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { computeCornellGpa } from "@/lib/gpa/computeGpa"
 
-describe("computeCornellGpa43", () => {
+describe("computeCornellGpa", () => {
   it("returns null GPA when there are no graded credits", () => {
     expect(computeCornellGpa([])).toEqual({
       gpa: null,
