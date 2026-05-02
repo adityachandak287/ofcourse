@@ -11,7 +11,7 @@ export type GpaComputation = {
   qualityPoints: number
 }
 
-export function computeCornellGpa43(courses: readonly GpaCourseInput[]): GpaComputation {
+export function computeCornellGpa(courses: readonly GpaCourseInput[]): GpaComputation {
   let gradedCredits = 0
   let qualityPoints = 0
 

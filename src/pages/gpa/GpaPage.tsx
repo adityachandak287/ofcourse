@@ -32,7 +32,7 @@ import {
   SelectedCoursesTable,
   type SelectedCourseRow,
 } from "@/features/gpa/components/SelectedCoursesTable"
-import { computeCornellGpa43, type GpaCourseInput } from "@/lib/gpa/computeGpa"
+import { computeCornellGpa, type GpaCourseInput } from "@/lib/gpa/computeGpa"
 import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
 
 const DEFAULT_ROSTER = "SP26"
@@ -246,7 +246,7 @@ export function GpaPage() {
       credits: c.credits,
       grade: c.grade,
     }))
-    return computeCornellGpa43(inputs)
+    return computeCornellGpa(inputs)
   }, [selectedCourses])
 
   React.useEffect(() => {
