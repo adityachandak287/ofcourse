@@ -27,17 +27,17 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Format
+        run: bun run format:check
+      
       - name: Lint
         run: bun run lint
 
-      - name: Format check
-        run: bunx --bun prettier --check .
-
-      - name: React doctor
+      - name: AI Code Scan
         run: bunx --bun react-doctor
 
-      - name: Run unit tests
+      - name: Unit Tests
         run: bun run test:run
 
-      - name: Build app
+      - name: Build
         run: bun run build
