@@ -37,7 +37,7 @@ jobs:
         run: bunx --bun react-doctor
 
       - name: Unit Tests
-        run: bun run test:run
+        run: bun run test:coverage
 
       - name: Build
         run: bun run build
