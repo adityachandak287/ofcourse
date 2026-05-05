@@ -4,19 +4,19 @@ overview: Implement roster-scoped clear-all with shadcn Popover confirmation, an
 todos:
   - id: add-sort-state
     content: Add per-roster sort state model and localStorage load/save in GpaPage
-    status: pending
+    status: completed
   - id: derive-display-courses
     content: Implement memoized displayCourses with none/course/credits/grade comparators and S/U-last ranking
-    status: pending
+    status: completed
   - id: add-sort-ui
     content: Add sort field + direction controls in GPA page and wire to state
-    status: pending
+    status: completed
   - id: add-clear-all-popover
     content: Add Clear all trigger with shadcn Popover confirmation and clear handler
-    status: pending
+    status: completed
   - id: wire-table-and-validate
     content: Pass displayCourses to SelectedCoursesTable and verify behavior contracts
-    status: pending
+    status: completed
 isProject: false
 ---
 
