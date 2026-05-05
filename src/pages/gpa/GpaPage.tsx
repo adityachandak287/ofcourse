@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowDownIcon, ArrowUpIcon, Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,14 +28,6 @@ import {
   PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Toggle } from "@/components/ui/toggle";
 import { toast } from "sonner";
 import { useSearchParams } from "wouter";
 
@@ -52,6 +44,9 @@ import {
 import {
   SelectedCoursesTable,
   type SelectedCourseRow,
+  type SortDirection,
+  type SortField,
+  type SortableField,
 } from "@/features/gpa/components/SelectedCoursesTable";
 import { computeCornellGpa, type GpaCourseInput } from "@/lib/gpa/computeGpa";
 import {
@@ -66,11 +61,8 @@ const DEFAULT_SUBJECT = "CS";
 const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses";
 const SORT_PREFERENCE_STORAGE_PREFIX = "ofcourse-sort-preference";
 
-const SORT_FIELDS = ["none", "course", "credits", "grade"] as const;
-type SortField = (typeof SORT_FIELDS)[number];
-
-const SORT_DIRECTIONS = ["asc", "desc"] as const;
-type SortDirection = (typeof SORT_DIRECTIONS)[number];
+const SORT_FIELDS: readonly SortField[] = ["none", "course", "credits", "grade"];
+const SORT_DIRECTIONS: readonly SortDirection[] = ["asc", "desc"];
 
 type SortPreference = {
   field: SortField;
@@ -80,13 +72,6 @@ type SortPreference = {
 const DEFAULT_SORT_PREFERENCE: SortPreference = {
   field: "none",
   direction: "asc",
-};
-
-const SORT_FIELD_LABELS: Record<SortField, string> = {
-  none: "Insertion order",
-  course: "Course code",
-  credits: "Credits",
-  grade: "Grade",
 };
 
 type StoredSelectedCourseRow = {
@@ -566,6 +551,17 @@ export function GpaPage() {
     toast.success(`Cleared ${removedCount} course${removedCount === 1 ? "" : "s"} from ${roster}.`);
   }
 
+  function handleHeaderSortClick(field: SortableField) {
+    setSortPreference((prev) => {
+      // Different column: activate clicked column starting at ascending.
+      if (prev.field !== field) return { field, direction: "asc" };
+      // Same column ascending: switch to descending.
+      if (prev.direction === "asc") return { field, direction: "desc" };
+      // Same column descending: cycle back to no active sort.
+      return DEFAULT_SORT_PREFERENCE;
+    });
+  }
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
       <Card>
@@ -853,58 +849,36 @@ export function GpaPage() {
                 </div>
               </div>
 
-              {selectedCourses.length > 0 ? (
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">
-                      Sort
-                    </Label>
-                    <Select
-                      value={sortPreference.field}
-                      onValueChange={(value) => {
-                        if (!isSortField(value)) return;
-                        setSortPreference((prev) => ({
-                          ...prev,
-                          field: value,
-                        }));
-                      }}
-                    >
-                      <SelectTrigger size="sm" aria-label="Sort field">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SORT_FIELDS.map((field) => (
-                          <SelectItem key={field} value={field}>
-                            {SORT_FIELD_LABELS[field]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Toggle
-                      variant="outline"
-                      size="sm"
-                      pressed={sortPreference.direction === "desc"}
-                      disabled={sortPreference.field === "none"}
-                      onPressedChange={(pressed) =>
-                        setSortPreference((prev) => ({
-                          ...prev,
-                          direction: pressed ? "desc" : "asc",
-                        }))
-                      }
-                      aria-label={
-                        sortPreference.direction === "desc"
-                          ? "Sort descending"
-                          : "Sort ascending"
-                      }
-                    >
-                      {sortPreference.direction === "desc" ? (
-                        <ArrowDownIcon />
-                      ) : (
-                        <ArrowUpIcon />
-                      )}
-                    </Toggle>
-                  </div>
+              {selectedCourses.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  Add a course above to start calculating.
+                </div>
+              ) : (
+                <SelectedCoursesTable
+                  courses={displayCourses}
+                  sortField={sortPreference.field}
+                  sortDirection={sortPreference.direction}
+                  onSortFieldClick={handleHeaderSortClick}
+                  onCreditsChange={updateCourseCredits}
+                  onGradeChange={updateCourseGrade}
+                  onRemove={removeCourse}
+                />
+              )}
 
+              <div className="text-xs text-muted-foreground">
+                Quality points:{" "}
+                <span className="tabular-nums">
+                  {gpa.qualityPoints.toFixed(2)}
+                </span>{" "}
+                · Graded credits:{" "}
+                <span className="tabular-nums">
+                  {gpa.gradedCredits.toFixed(1)}
+                </span>{" "}
+                · S/U excluded from GPA.
+              </div>
+
+              {selectedCourses.length > 0 ? (
+                <div className="flex justify-center">
                   <Popover
                     open={clearAllPopoverOpen}
                     onOpenChange={setClearAllPopoverOpen}
@@ -954,31 +928,6 @@ export function GpaPage() {
                   </Popover>
                 </div>
               ) : null}
-
-              {selectedCourses.length === 0 ? (
-                <div className="text-sm text-muted-foreground">
-                  Add a course above to start calculating.
-                </div>
-              ) : (
-                <SelectedCoursesTable
-                  courses={displayCourses}
-                  onCreditsChange={updateCourseCredits}
-                  onGradeChange={updateCourseGrade}
-                  onRemove={removeCourse}
-                />
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                Quality points:{" "}
-                <span className="tabular-nums">
-                  {gpa.qualityPoints.toFixed(2)}
-                </span>{" "}
-                · Graded credits:{" "}
-                <span className="tabular-nums">
-                  {gpa.gradedCredits.toFixed(1)}
-                </span>{" "}
-                · S/U excluded from GPA.
-              </div>
             </div>
           </div>
         </CardContent>

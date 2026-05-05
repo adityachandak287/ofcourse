@@ -4,19 +4,19 @@ overview: Implement roster-scoped clear-all anchored below the course table, and
 todos:
   - id: add-sort-state
     content: Keep per-roster sort state model and localStorage load/save in GpaPage
-    status: pending
+    status: completed
   - id: derive-display-courses
     content: Implement memoized displayCourses with none/course/credits/grade comparators, 3-state column cycling, and S/U-last ranking
-    status: pending
+    status: completed
   - id: make-headers-sortable
     content: Make Course, Credits, and Grade headers clickable in SelectedCoursesTable and propagate sort toggles to GpaPage
-    status: pending
+    status: completed
   - id: add-clear-all-popover
     content: Place Clear all Popover control below the table and above summary, then wire clear handler
-    status: pending
+    status: completed
   - id: wire-table-and-validate
     content: Pass sort metadata and handlers between GpaPage and SelectedCoursesTable, then verify behavior contracts
-    status: pending
+    status: completed
 isProject: false
 ---
 
