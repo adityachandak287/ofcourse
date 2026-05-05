@@ -1,10 +1,16 @@
-import * as React from "react"
+import * as React from "react";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Command,
   CommandEmpty,
@@ -12,328 +18,401 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { toast } from "sonner"
-import { useSearchParams } from "wouter"
+} from "@/components/ui/popover";
+import { toast } from "sonner";
+import { useSearchParams } from "wouter";
 
-import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes"
+import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes";
 import {
   useCornellClassesByRosterAndSubjectQuery,
   useCornellRostersQuery,
   useCornellSubjectsByRosterQuery,
-} from "@/features/courses/queries"
-import { formatCornellCourseLabel, getCornellCourseCredits } from "@/features/courses/courseLabel"
+} from "@/features/courses/queries";
+import {
+  formatCornellCourseLabel,
+  getCornellCourseCredits,
+} from "@/features/courses/courseLabel";
 import {
   SelectedCoursesTable,
   type SelectedCourseRow,
-} from "@/features/gpa/components/SelectedCoursesTable"
-import { computeCornellGpa, type GpaCourseInput } from "@/lib/gpa/computeGpa"
-import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades"
+} from "@/features/gpa/components/SelectedCoursesTable";
+import { computeCornellGpa, type GpaCourseInput } from "@/lib/gpa/computeGpa";
+import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades";
 
-const DEFAULT_ROSTER = "SP26"
-const DEFAULT_SUBJECT = "CS"
-const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses"
+const DEFAULT_ROSTER = "SP26";
+const DEFAULT_SUBJECT = "CS";
+const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses";
 
 type StoredSelectedCourseRow = {
-  key: string
-  course: CornellClassSummary
-  credits: number
-  grade: CourseGrade
-}
+  key: string;
+  course: CornellClassSummary;
+  credits: number;
+  grade: CourseGrade;
+};
 
 function getSelectedCoursesStorageKey(roster: string) {
-  return `${SELECTED_COURSES_STORAGE_PREFIX}:${roster}`
+  return `${SELECTED_COURSES_STORAGE_PREFIX}:${roster}`;
 }
 
-function getColumnWidthCh(input: { maxCodeLength: number; minCh: number; maxCh: number; paddingCh?: number }) {
-  const paddedLength = input.maxCodeLength + (input.paddingCh ?? 1)
-  const widthCh = Math.min(input.maxCh, Math.max(input.minCh, paddedLength))
-  return `${widthCh}ch`
+function getColumnWidthCh(input: {
+  maxCodeLength: number;
+  minCh: number;
+  maxCh: number;
+  paddingCh?: number;
+}) {
+  const paddedLength = input.maxCodeLength + (input.paddingCh ?? 1);
+  const widthCh = Math.min(input.maxCh, Math.max(input.minCh, paddedLength));
+  return `${widthCh}ch`;
 }
 
 function normalizeRoster(input: string) {
-  return input.trim().toUpperCase()
+  return input.trim().toUpperCase();
 }
 
 function isCourseGrade(value: unknown): value is CourseGrade {
-  return typeof value === "string" && GRADE_OPTIONS.includes(value as CourseGrade)
+  return (
+    typeof value === "string" && GRADE_OPTIONS.includes(value as CourseGrade)
+  );
 }
 
 function isCornellClassSummary(value: unknown): value is CornellClassSummary {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false
-  const maybeCourse = value as Record<string, unknown>
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const maybeCourse = value as Record<string, unknown>;
 
-  if (maybeCourse.crseId !== undefined && typeof maybeCourse.crseId !== "number") return false
-  if (maybeCourse.crseOfferNbr !== undefined && typeof maybeCourse.crseOfferNbr !== "number") return false
-  if (maybeCourse.subject !== undefined && typeof maybeCourse.subject !== "string") return false
-  if (maybeCourse.catalogNbr !== undefined && typeof maybeCourse.catalogNbr !== "string") return false
-  if (maybeCourse.titleShort !== undefined && typeof maybeCourse.titleShort !== "string") return false
-  if (maybeCourse.titleLong !== undefined && typeof maybeCourse.titleLong !== "string") return false
+  if (
+    maybeCourse.crseId !== undefined &&
+    typeof maybeCourse.crseId !== "number"
+  )
+    return false;
+  if (
+    maybeCourse.crseOfferNbr !== undefined &&
+    typeof maybeCourse.crseOfferNbr !== "number"
+  )
+    return false;
+  if (
+    maybeCourse.subject !== undefined &&
+    typeof maybeCourse.subject !== "string"
+  )
+    return false;
+  if (
+    maybeCourse.catalogNbr !== undefined &&
+    typeof maybeCourse.catalogNbr !== "string"
+  )
+    return false;
+  if (
+    maybeCourse.titleShort !== undefined &&
+    typeof maybeCourse.titleShort !== "string"
+  )
+    return false;
+  if (
+    maybeCourse.titleLong !== undefined &&
+    typeof maybeCourse.titleLong !== "string"
+  )
+    return false;
 
   if (maybeCourse.enrollGroups !== undefined) {
-    if (!Array.isArray(maybeCourse.enrollGroups)) return false
+    if (!Array.isArray(maybeCourse.enrollGroups)) return false;
     for (const enrollGroup of maybeCourse.enrollGroups) {
-      if (!enrollGroup || typeof enrollGroup !== "object" || Array.isArray(enrollGroup)) return false
-      const maybeEnrollGroup = enrollGroup as Record<string, unknown>
+      if (
+        !enrollGroup ||
+        typeof enrollGroup !== "object" ||
+        Array.isArray(enrollGroup)
+      )
+        return false;
+      const maybeEnrollGroup = enrollGroup as Record<string, unknown>;
       if (
         maybeEnrollGroup.unitsMinimum !== undefined &&
         typeof maybeEnrollGroup.unitsMinimum !== "number"
       ) {
-        return false
+        return false;
       }
       if (
         maybeEnrollGroup.unitsMaximum !== undefined &&
         typeof maybeEnrollGroup.unitsMaximum !== "number"
       ) {
-        return false
+        return false;
       }
     }
   }
 
-  return true
+  return true;
 }
 
-function parseStoredSelectedCourses(value: string | null): SelectedCourseRow[] | null {
-  if (!value) return []
+function parseStoredSelectedCourses(
+  value: string | null,
+): SelectedCourseRow[] | null {
+  if (!value) return [];
 
   try {
-    const parsed: unknown = JSON.parse(value)
-    if (!Array.isArray(parsed)) return null
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return null;
 
-    const nextCourses: SelectedCourseRow[] = []
+    const nextCourses: SelectedCourseRow[] = [];
     for (const item of parsed) {
-      if (!item || typeof item !== "object" || Array.isArray(item)) return null
-      const maybeRow = item as Record<string, unknown>
+      if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+      const maybeRow = item as Record<string, unknown>;
       const candidate: StoredSelectedCourseRow = {
         key: maybeRow.key as string,
         course: maybeRow.course as CornellClassSummary,
         credits: maybeRow.credits as number,
         grade: maybeRow.grade as CourseGrade,
-      }
+      };
 
-      if (typeof candidate.key !== "string") return null
-      if (!isCornellClassSummary(candidate.course)) return null
-      if (typeof candidate.credits !== "number" || !Number.isFinite(candidate.credits) || candidate.credits <= 0) {
-        return null
+      if (typeof candidate.key !== "string") return null;
+      if (!isCornellClassSummary(candidate.course)) return null;
+      if (
+        typeof candidate.credits !== "number" ||
+        !Number.isFinite(candidate.credits) ||
+        candidate.credits <= 0
+      ) {
+        return null;
       }
-      if (!isCourseGrade(candidate.grade)) return null
+      if (!isCourseGrade(candidate.grade)) return null;
 
-      nextCourses.push(candidate)
+      nextCourses.push(candidate);
     }
 
-    return nextCourses
+    return nextCourses;
   } catch {
-    return null
+    return null;
   }
 }
 
 function normalizeSubject(input: string) {
-  return input.trim().toUpperCase().replaceAll(/\s+/g, "")
+  return input.trim().toUpperCase().replaceAll(/\s+/g, "");
 }
 
 function getCourseFiltersFromSearchParams(params: URLSearchParams) {
-  const rosterFromParams = normalizeRoster(params.get("roster") ?? "")
-  const subjectFromParams = normalizeSubject(params.get("subject") ?? "")
+  const rosterFromParams = normalizeRoster(params.get("roster") ?? "");
+  const subjectFromParams = normalizeSubject(params.get("subject") ?? "");
 
   return {
     roster: rosterFromParams || DEFAULT_ROSTER,
     subjectInput: subjectFromParams || DEFAULT_SUBJECT,
-  }
+  };
 }
 
 export function GpaPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialCourseFilters = React.useMemo(
     () => getCourseFiltersFromSearchParams(searchParams),
-    [searchParams]
-  )
-  const [roster, setRoster] = React.useState<string>(initialCourseFilters.roster)
-  const [subjectInput, setSubjectInput] = React.useState<string>(initialCourseFilters.subjectInput)
-  const subject = normalizeSubject(subjectInput)
+    [searchParams],
+  );
+  const [roster, setRoster] = React.useState<string>(
+    initialCourseFilters.roster,
+  );
+  const [subjectInput, setSubjectInput] = React.useState<string>(
+    initialCourseFilters.subjectInput,
+  );
+  const subject = normalizeSubject(subjectInput);
 
-  const [coursePickerOpen, setCoursePickerOpen] = React.useState(false)
-  const [courseSearch, setCourseSearch] = React.useState("")
-  const [rosterPickerOpen, setRosterPickerOpen] = React.useState(false)
-  const [rosterSearch, setRosterSearch] = React.useState("")
-  const [subjectPickerOpen, setSubjectPickerOpen] = React.useState(false)
-  const [subjectSearch, setSubjectSearch] = React.useState("")
-  const [hasRequestedRosters, setHasRequestedRosters] = React.useState(false)
+  const [coursePickerOpen, setCoursePickerOpen] = React.useState(false);
+  const [courseSearch, setCourseSearch] = React.useState("");
+  const [rosterPickerOpen, setRosterPickerOpen] = React.useState(false);
+  const [rosterSearch, setRosterSearch] = React.useState("");
+  const [subjectPickerOpen, setSubjectPickerOpen] = React.useState(false);
+  const [subjectSearch, setSubjectSearch] = React.useState("");
+  const [hasRequestedRosters, setHasRequestedRosters] = React.useState(false);
   const [hasRequestedSubjectsByRoster, setHasRequestedSubjectsByRoster] =
-    React.useState<Record<string, boolean>>({})
+    React.useState<Record<string, boolean>>({});
 
-  const [selectedCourses, setSelectedCourses] = React.useState<SelectedCourseRow[]>([])
-  const [loadedRoster, setLoadedRoster] = React.useState<string | null>(null)
-  const hasLoadedRosterRef = React.useRef<Record<string, boolean>>({})
+  const [selectedCourses, setSelectedCourses] = React.useState<
+    SelectedCourseRow[]
+  >([]);
+  const [loadedRoster, setLoadedRoster] = React.useState<string | null>(null);
+  const hasLoadedRosterRef = React.useRef<Record<string, boolean>>({});
 
   const classesQuery = useCornellClassesByRosterAndSubjectQuery({
     roster,
     subject,
     enabled: subject.length > 0,
-  })
+  });
 
   const rostersQuery = useCornellRostersQuery({
     enabled: hasRequestedRosters,
-  })
+  });
 
   const subjectsQuery = useCornellSubjectsByRosterQuery({
     roster,
     enabled: hasRequestedSubjectsByRoster[roster] === true,
-  })
+  });
 
-  const courses = React.useMemo(() => classesQuery.data?.classes ?? [], [classesQuery.data])
+  const courses = React.useMemo(
+    () => classesQuery.data?.classes ?? [],
+    [classesQuery.data],
+  );
   const rosters = React.useMemo(
     () =>
       [...(rostersQuery.data?.rosters ?? [])].sort((a, b) => {
-        const aShort = a.descrshort ?? ""
-        const bShort = b.descrshort ?? ""
-        return bShort.localeCompare(aShort)
+        const aShort = a.descrshort ?? "";
+        const bShort = b.descrshort ?? "";
+        return bShort.localeCompare(aShort);
       }),
-    [rostersQuery.data]
-  )
-  const subjects = React.useMemo(() => subjectsQuery.data?.subjects ?? [], [subjectsQuery.data])
+    [rostersQuery.data],
+  );
+  const subjects = React.useMemo(
+    () => subjectsQuery.data?.subjects ?? [],
+    [subjectsQuery.data],
+  );
 
   const rosterCodeColumnWidth = React.useMemo(() => {
-    const maxCodeLength = rosters.reduce((max, option) => Math.max(max, option.slug.length), 0)
+    const maxCodeLength = rosters.reduce(
+      (max, option) => Math.max(max, option.slug.length),
+      0,
+    );
     return getColumnWidthCh({
       maxCodeLength,
       minCh: 6,
       maxCh: 10,
       paddingCh: 1,
-    })
-  }, [rosters])
+    });
+  }, [rosters]);
 
   const subjectCodeColumnWidth = React.useMemo(() => {
-    const maxCodeLength = subjects.reduce((max, option) => Math.max(max, option.value.length), 0)
+    const maxCodeLength = subjects.reduce(
+      (max, option) => Math.max(max, option.value.length),
+      0,
+    );
     return getColumnWidthCh({
       maxCodeLength,
       minCh: 4,
       maxCh: 9,
       paddingCh: 1,
-    })
-  }, [subjects])
+    });
+  }, [subjects]);
 
   const courseCodeColumnWidth = React.useMemo(() => {
     const maxCodeLength = courses.reduce((max, option) => {
-      const courseCode = `${option.subject ?? "—"} ${option.catalogNbr ?? "—"}`
-      return Math.max(max, courseCode.length)
-    }, 0)
+      const courseCode = `${option.subject ?? "—"} ${option.catalogNbr ?? "—"}`;
+      return Math.max(max, courseCode.length);
+    }, 0);
 
     return getColumnWidthCh({
       maxCodeLength,
       minCh: 8,
       maxCh: 14,
       paddingCh: 1,
-    })
-  }, [courses])
+    });
+  }, [courses]);
 
   const filteredCourses = React.useMemo(() => {
-    const q = courseSearch.trim().toLowerCase()
-    if (!q) return courses
+    const q = courseSearch.trim().toLowerCase();
+    if (!q) return courses;
 
     return courses.filter((c) => {
-      const label = formatCornellCourseLabel(c).toLowerCase()
-      return label.includes(q)
-    })
-  }, [courseSearch, courses])
+      const label = formatCornellCourseLabel(c).toLowerCase();
+      return label.includes(q);
+    });
+  }, [courseSearch, courses]);
 
   const gpa = React.useMemo(() => {
     const inputs: GpaCourseInput[] = selectedCourses.map((c) => ({
       credits: c.credits,
       grade: c.grade,
-    }))
-    return computeCornellGpa(inputs)
-  }, [selectedCourses])
+    }));
+    return computeCornellGpa(inputs);
+  }, [selectedCourses]);
 
   React.useEffect(() => {
-    const normalizedRoster = normalizeRoster(roster)
-    const normalizedSubject = normalizeSubject(subjectInput)
-    const nextSearchParams = new URLSearchParams(searchParams)
+    const normalizedRoster = normalizeRoster(roster);
+    const normalizedSubject = normalizeSubject(subjectInput);
+    const nextSearchParams = new URLSearchParams(searchParams);
 
-    nextSearchParams.set("roster", normalizedRoster)
-    nextSearchParams.set("subject", normalizedSubject)
+    nextSearchParams.set("roster", normalizedRoster);
+    nextSearchParams.set("subject", normalizedSubject);
 
     if (nextSearchParams.toString() !== searchParams.toString()) {
-      setSearchParams(nextSearchParams, { replace: true })
+      setSearchParams(nextSearchParams, { replace: true });
     }
-  }, [roster, searchParams, subjectInput, setSearchParams])
+  }, [roster, searchParams, subjectInput, setSearchParams]);
 
   React.useEffect(() => {
-    const nextFilters = getCourseFiltersFromSearchParams(searchParams)
+    const nextFilters = getCourseFiltersFromSearchParams(searchParams);
 
-    setRoster((prev) => (prev === nextFilters.roster ? prev : nextFilters.roster))
-    setSubjectInput((prev) => (prev === nextFilters.subjectInput ? prev : nextFilters.subjectInput))
-  }, [searchParams])
+    setRoster((prev) =>
+      prev === nextFilters.roster ? prev : nextFilters.roster,
+    );
+    setSubjectInput((prev) =>
+      prev === nextFilters.subjectInput ? prev : nextFilters.subjectInput,
+    );
+  }, [searchParams]);
 
   React.useEffect(() => {
-    const storageKey = getSelectedCoursesStorageKey(roster)
-    const parsedCourses = parseStoredSelectedCourses(localStorage.getItem(storageKey))
+    const storageKey = getSelectedCoursesStorageKey(roster);
+    const parsedCourses = parseStoredSelectedCourses(
+      localStorage.getItem(storageKey),
+    );
 
     if (parsedCourses == null) {
-      setSelectedCourses([])
-      setLoadedRoster(roster)
-      return
+      setSelectedCourses([]);
+      setLoadedRoster(roster);
+      return;
     }
 
-    setSelectedCourses(parsedCourses)
-    setLoadedRoster(roster)
+    setSelectedCourses(parsedCourses);
+    setLoadedRoster(roster);
 
-    const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster]
-    hasLoadedRosterRef.current[roster] = true
+    const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster];
+    hasLoadedRosterRef.current[roster] = true;
 
     if (isFirstLoadForRoster && parsedCourses.length > 0) {
       setTimeout(() => {
         toast.info("Loaded saved courses from this device.", {
-            description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
-          })
-      }, 0)
+          description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
+        });
+      }, 0);
     }
-  }, [roster])
+  }, [roster]);
 
   React.useEffect(() => {
-    if (loadedRoster !== roster) return
+    if (loadedRoster !== roster) return;
 
-    const storageKey = getSelectedCoursesStorageKey(roster)
-    localStorage.setItem(storageKey, JSON.stringify(selectedCourses))
-  }, [loadedRoster, roster, selectedCourses])
+    const storageKey = getSelectedCoursesStorageKey(roster);
+    localStorage.setItem(storageKey, JSON.stringify(selectedCourses));
+  }, [loadedRoster, roster, selectedCourses]);
 
   function addCourse(course: CornellClassSummary) {
     const key =
       (course.crseId && course.crseOfferNbr != null
         ? `${course.crseId}-${course.crseOfferNbr}`
-        : formatCornellCourseLabel(course)) || crypto.randomUUID()
+        : formatCornellCourseLabel(course)) || crypto.randomUUID();
 
-    if (selectedCourses.some((c) => c.key === key)) return
+    if (selectedCourses.some((c) => c.key === key)) return;
 
-    const credits = getCornellCourseCredits(course) ?? 3
+    const credits = getCornellCourseCredits(course) ?? 3;
     setSelectedCourses((prev) => [
       ...prev,
       { key, course, credits, grade: "A" },
-    ])
+    ]);
   }
 
   function removeCourse(key: string) {
-    setSelectedCourses((prev) => prev.filter((c) => c.key !== key))
+    setSelectedCourses((prev) => prev.filter((c) => c.key !== key));
   }
 
   function updateCourseCredits(key: string, value: string) {
-    if (!value) return
-    const parsed = Number.parseFloat(value)
-    if (!Number.isFinite(parsed) || parsed <= 0) return
+    if (!value) return;
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
 
     setSelectedCourses((prev) =>
-      prev.map((course) => (course.key === key ? { ...course, credits: parsed } : course))
-    )
+      prev.map((course) =>
+        course.key === key ? { ...course, credits: parsed } : course,
+      ),
+    );
   }
 
   function updateCourseGrade(key: string, grade: CourseGrade) {
     setSelectedCourses((prev) =>
-      prev.map((course) => (course.key === key ? { ...course, grade } : course))
-    )
+      prev.map((course) =>
+        course.key === key ? { ...course, grade } : course,
+      ),
+    );
   }
 
   return (
@@ -342,7 +421,8 @@ export function GpaPage() {
         <CardHeader>
           <CardTitle>GPA Calculator</CardTitle>
           <CardDescription>
-            Pick a roster + subject, then add courses and experiment with grades (Cornell 4.3 scale).
+            Pick a roster + subject, then add courses and experiment with grades
+            (Cornell 4.3 scale).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -353,16 +433,23 @@ export function GpaPage() {
                 <Popover
                   open={rosterPickerOpen}
                   onOpenChange={(open) => {
-                    setRosterPickerOpen(open)
-                    if (open) setHasRequestedRosters(true)
+                    setRosterPickerOpen(open);
+                    if (open) setHasRequestedRosters(true);
                   }}
                 >
                   <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
                       {roster || DEFAULT_ROSTER}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput
                         value={rosterSearch}
@@ -386,7 +473,7 @@ export function GpaPage() {
                             <CommandItem
                               value="retry-rosters"
                               onSelect={() => {
-                                void rostersQuery.refetch()
+                                void rostersQuery.refetch();
                               }}
                             >
                               Retry
@@ -403,9 +490,9 @@ export function GpaPage() {
                                   key={option.slug}
                                   value={`${option.slug} ${option.descr}`}
                                   onSelect={() => {
-                                    setRoster(normalizeRoster(option.slug))
-                                    setRosterPickerOpen(false)
-                                    setRosterSearch("")
+                                    setRoster(normalizeRoster(option.slug));
+                                    setRosterPickerOpen(false);
+                                    setRosterSearch("");
                                   }}
                                 >
                                   <span
@@ -414,7 +501,9 @@ export function GpaPage() {
                                   >
                                     {option.slug}
                                   </span>
-                                  <span className="text-muted-foreground">{option.descr}</span>
+                                  <span className="text-muted-foreground">
+                                    {option.descr}
+                                  </span>
                                 </CommandItem>
                               ))}
                             </CommandGroup>
@@ -430,20 +519,27 @@ export function GpaPage() {
                 <Popover
                   open={subjectPickerOpen}
                   onOpenChange={(open) => {
-                    setSubjectPickerOpen(open)
-                    if (!open) return
+                    setSubjectPickerOpen(open);
+                    if (!open) return;
                     setHasRequestedSubjectsByRoster((prev) => ({
                       ...prev,
                       [roster]: true,
-                    }))
+                    }));
                   }}
                 >
                   <PopoverTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full justify-between">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
                       {subject || DEFAULT_SUBJECT}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput
                         value={subjectSearch}
@@ -467,7 +563,7 @@ export function GpaPage() {
                             <CommandItem
                               value="retry-subjects"
                               onSelect={() => {
-                                void subjectsQuery.refetch()
+                                void subjectsQuery.refetch();
                               }}
                             >
                               Retry
@@ -485,9 +581,11 @@ export function GpaPage() {
                                   value={`${option.value} ${option.descrformal}`}
                                   className="items-start"
                                   onSelect={() => {
-                                    setSubjectInput(normalizeSubject(option.value))
-                                    setSubjectPickerOpen(false)
-                                    setSubjectSearch("")
+                                    setSubjectInput(
+                                      normalizeSubject(option.value),
+                                    );
+                                    setSubjectPickerOpen(false);
+                                    setSubjectSearch("");
                                   }}
                                 >
                                   <span
@@ -513,7 +611,10 @@ export function GpaPage() {
 
             <div className="flex flex-col gap-2">
               <Label>Add course</Label>
-              <Popover open={coursePickerOpen} onOpenChange={setCoursePickerOpen}>
+              <Popover
+                open={coursePickerOpen}
+                onOpenChange={setCoursePickerOpen}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -521,11 +622,16 @@ export function GpaPage() {
                     className="w-full justify-between"
                     disabled={!subject || classesQuery.isLoading}
                   >
-                    {classesQuery.isLoading ? "Loading courses..." : "Search courses"}
+                    {classesQuery.isLoading
+                      ? "Loading courses..."
+                      : "Search courses"}
                     <Badge variant="secondary">{courses.length}</Badge>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <PopoverContent
+                  className="w-[--radix-popover-trigger-width] p-0"
+                  align="start"
+                >
                   <Command shouldFilter={false}>
                     <CommandInput
                       value={courseSearch}
@@ -534,12 +640,13 @@ export function GpaPage() {
                     />
                     <CommandList>
                       <CommandEmpty>No courses found.</CommandEmpty>
-                            <CommandGroup heading={`${roster} · ${subject}`}>
-                              {filteredCourses.slice(0, 200).map((c, idx) => {
-                                const key =
-                                  (c.crseId && c.crseOfferNbr != null
-                                    ? `${c.crseId}-${c.crseOfferNbr}`
-                              : `${formatCornellCourseLabel(c)}-${idx}`) || `${idx}`
+                      <CommandGroup heading={`${roster} · ${subject}`}>
+                        {filteredCourses.slice(0, 200).map((c, idx) => {
+                          const key =
+                            (c.crseId && c.crseOfferNbr != null
+                              ? `${c.crseId}-${c.crseOfferNbr}`
+                              : `${formatCornellCourseLabel(c)}-${idx}`) ||
+                            `${idx}`;
 
                           return (
                             <CommandItem
@@ -547,9 +654,9 @@ export function GpaPage() {
                               value={formatCornellCourseLabel(c)}
                               className="items-start"
                               onSelect={() => {
-                                addCourse(c)
-                                setCoursePickerOpen(false)
-                                setCourseSearch("")
+                                addCourse(c);
+                                setCoursePickerOpen(false);
+                                setCourseSearch("");
                               }}
                             >
                               <div className="flex min-w-0 w-full items-center gap-2 overflow-hidden">
@@ -567,7 +674,7 @@ export function GpaPage() {
                                 </div>
                               </div>
                             </CommandItem>
-                          )
+                          );
                         })}
                       </CommandGroup>
                     </CommandList>
@@ -576,7 +683,8 @@ export function GpaPage() {
               </Popover>
               {classesQuery.isError ? (
                 <div className="text-sm text-destructive">
-                  Failed to load courses. (Check roster/subject, and Netlify proxy on deploy.)
+                  Failed to load courses. (Check roster/subject, and Netlify
+                  proxy on deploy.)
                 </div>
               ) : null}
             </div>
@@ -608,14 +716,20 @@ export function GpaPage() {
               )}
 
               <div className="text-xs text-muted-foreground">
-                Quality points: <span className="tabular-nums">{gpa.qualityPoints.toFixed(2)}</span> ·
-                Graded credits: <span className="tabular-nums">{gpa.gradedCredits.toFixed(1)}</span> ·
-                S/U excluded from GPA.
+                Quality points:{" "}
+                <span className="tabular-nums">
+                  {gpa.qualityPoints.toFixed(2)}
+                </span>{" "}
+                · Graded credits:{" "}
+                <span className="tabular-nums">
+                  {gpa.gradedCredits.toFixed(1)}
+                </span>{" "}
+                · S/U excluded from GPA.
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

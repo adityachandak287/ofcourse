@@ -11,11 +11,11 @@ export type LetterGrade =
   | "D+"
   | "D"
   | "D-"
-  | "F"
+  | "F";
 
-export type SuGrade = "S" | "U"
+export type SuGrade = "S" | "U";
 
-export type CourseGrade = LetterGrade | SuGrade
+export type CourseGrade = LetterGrade | SuGrade;
 
 export const LETTER_GRADE_POINTS: Record<LetterGrade, number> = {
   "A+": 4.3,
@@ -31,7 +31,7 @@ export const LETTER_GRADE_POINTS: Record<LetterGrade, number> = {
   D: 1.0,
   "D-": 0.7,
   F: 0.0,
-}
+};
 
 export const GRADE_OPTIONS: CourseGrade[] = [
   "A+",
@@ -49,9 +49,8 @@ export const GRADE_OPTIONS: CourseGrade[] = [
   "F",
   "S",
   "U",
-]
+];
 
 export function gradeCountsTowardGpa(grade: CourseGrade): grade is LetterGrade {
-  return grade !== "S" && grade !== "U"
+  return grade !== "S" && grade !== "U";
 }
-
