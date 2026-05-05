@@ -212,7 +212,7 @@ https://classes.cornell.edu/api/2.0/search/classes.json?roster=SP26&subject=CS
         "titleLong": "Introduction to Computing: A Design and Development Perspective",
         "acadCareer": "UG",
         "acadGroup": "EN"
-      },
+      }
       // ... truncated
     ]
   },
@@ -223,8 +223,11 @@ https://classes.cornell.edu/api/2.0/search/classes.json?roster=SP26&subject=CS
   }
 }
 ```
+
 ---
+
 ## Error
+
 ```json
 {
   "status": "error",
