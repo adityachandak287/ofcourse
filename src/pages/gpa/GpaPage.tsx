@@ -912,7 +912,7 @@ export function GpaPage() {
                     <PopoverTrigger asChild>
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
                         disabled={selectedCourses.length === 0}
                       >
