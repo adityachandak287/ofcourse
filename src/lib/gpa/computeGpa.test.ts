@@ -5,7 +5,7 @@ import { computeCornellGpa } from "@/lib/gpa/computeGpa";
 describe("computeCornellGpa", () => {
   it("returns null GPA when there are no graded credits", () => {
     expect(computeCornellGpa([])).toEqual({
-      gpa: null,
+      gpa: undefined,
       gradedCredits: 0,
       qualityPoints: 0,
     });
