@@ -8,11 +8,13 @@ import {
   type CornellSubject,
 } from "@/lib/api/cornellRosterClient";
 
+const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
+
 export function cornellRostersQueryOptions() {
   return queryOptions({
     queryKey: ["cornellRoster", "rosters"] as const,
     queryFn: ({ signal }) => fetchCornellRosters({ signal }),
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: ONE_DAY_IN_MS,
   });
 }
 
@@ -33,7 +35,7 @@ export function cornellSubjectsByRosterQueryOptions(input: {
         roster: input.roster,
         signal,
       }),
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: ONE_DAY_IN_MS,
   });
 }
 
@@ -66,7 +68,7 @@ export function cornellClassesByRosterAndSubjectQueryOptions(input: {
         subject: input.subject,
         signal,
       }),
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: ONE_DAY_IN_MS,
   });
 }
 
