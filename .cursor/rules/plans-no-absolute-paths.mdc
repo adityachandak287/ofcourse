@@ -1,0 +1,12 @@
+---
+description: Plans must use repo-relative paths (no absolute paths)
+alwaysApply: true
+---
+
+# Plans: no absolute file paths
+
+When writing or updating plan documents under `.cursor/plans/`:
+
+- **Never use absolute file paths**, such as `/Users/...`, `/home/...`, or `C:\...`.
+- **Use repo-relative paths** instead (for example: `src/pages/gpa/GpaPage.tsx`).
+- When linking files in markdown, use relative links: `[text](src/.../file.tsx)`.

@@ -32,8 +32,8 @@ Implement two UI/behavior changes on the GPA page:
    - sort preference persisted per roster in localStorage
 
 ## Files to Update
-- [`/Users/aditya/projects/personal/ofcourse/src/pages/gpa/GpaPage.tsx`](/Users/aditya/projects/personal/ofcourse/src/pages/gpa/GpaPage.tsx)
-- [`/Users/aditya/projects/personal/ofcourse/src/features/gpa/components/SelectedCoursesTable.tsx`](/Users/aditya/projects/personal/ofcourse/src/features/gpa/components/SelectedCoursesTable.tsx)
+- [`src/pages/gpa/GpaPage.tsx`](src/pages/gpa/GpaPage.tsx)
+- [`src/features/gpa/components/SelectedCoursesTable.tsx`](src/features/gpa/components/SelectedCoursesTable.tsx)
 
 ## Implementation Steps
 - Add a roster-scoped sort preference model in `GpaPage`:
