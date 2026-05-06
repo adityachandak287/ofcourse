@@ -61,7 +61,12 @@ const DEFAULT_SUBJECT = "CS";
 const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses";
 const SORT_PREFERENCE_STORAGE_PREFIX = "ofcourse-sort-preference";
 
-const SORT_FIELDS: readonly SortField[] = ["none", "course", "credits", "grade"];
+const SORT_FIELDS: readonly SortField[] = [
+  "none",
+  "course",
+  "credits",
+  "grade",
+];
 const SORT_DIRECTIONS: readonly SortDirection[] = ["asc", "desc"];
 
 type SortPreference = {
@@ -397,8 +402,10 @@ export function GpaPage() {
     function compareForField(a: SelectedCourseRow, b: SelectedCourseRow) {
       switch (sortPreference.field) {
         case "course": {
-          const aCode = `${a.course.subject ?? ""} ${a.course.catalogNbr ?? ""}`.trim();
-          const bCode = `${b.course.subject ?? ""} ${b.course.catalogNbr ?? ""}`.trim();
+          const aCode =
+            `${a.course.subject ?? ""} ${a.course.catalogNbr ?? ""}`.trim();
+          const bCode =
+            `${b.course.subject ?? ""} ${b.course.catalogNbr ?? ""}`.trim();
           return aCode.localeCompare(bCode, undefined, {
             numeric: true,
             sensitivity: "base",
@@ -548,7 +555,9 @@ export function GpaPage() {
     if (removedCount === 0) return;
 
     setSelectedCourses([]);
-    toast.success(`Cleared ${removedCount} course${removedCount === 1 ? "" : "s"} from ${roster}.`);
+    toast.success(
+      `Cleared ${removedCount} course${removedCount === 1 ? "" : "s"} from ${roster}.`,
+    );
   }
 
   function handleHeaderSortClick(field: SortableField) {
