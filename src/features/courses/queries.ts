@@ -12,7 +12,7 @@ export function cornellRostersQueryOptions() {
   return queryOptions({
     queryKey: ["cornellRoster", "rosters"] as const,
     queryFn: ({ signal }) => fetchCornellRosters({ signal }),
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: 12 * 60 * 60 * 1000,
   });
 }
 
@@ -33,7 +33,7 @@ export function cornellSubjectsByRosterQueryOptions(input: {
         roster: input.roster,
         signal,
       }),
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: 12 * 60 * 60 * 1000,
   });
 }
 
@@ -66,7 +66,7 @@ export function cornellClassesByRosterAndSubjectQueryOptions(input: {
         subject: input.subject,
         signal,
       }),
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: 12 * 60 * 60 * 1000,
   });
 }
 
