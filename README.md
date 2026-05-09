@@ -1,121 +1,94 @@
 # ofcourse
 
-Client-side only GPA calculator + course tooling for Cornell students.
+![CI](https://github.com/adityachandak287/ofcourse/actions/workflows/ci.yml/badge.svg?branch=main)
+
+Client-side GPA calculator and course planning helper for Cornell students.
+
+## Why this project exists
+
+A lightweight SPA for exploring Cornell roster data and quickly estimating term GPA with Cornell-specific grading rules.
+
+## What the app does
+
+- Fetches Cornell rosters, subjects, and classes through a browser-safe proxy path (`/api/*`)
+- Lets users search courses, add them to a plan, and set credits/grades for GPA simulation
+- Computes weighted GPA using Cornell's 4.3 scale and quality points
+- Excludes non-GPA grades such as `S/U` from GPA calculations
+- Uses cached query data for a smoother roster browsing experience
+
+## Tech stack
+
+- Runtime/package manager: Bun
+- Frontend: React 19 + TypeScript + Vite
+- Routing: wouter
+- Data fetching/cache: TanStack React Query
+- UI: Tailwind v4 + shadcn/ui
+- Tooling: ESLint, Prettier, Vitest, GitHub Actions
+
+## Prerequisites
+
+- Bun installed locally ([install docs](https://bun.sh/docs/installation))
 
 ## Local development
-
-This project uses **Bun**.
 
 ```bash
 bun install
 bun run dev
 ```
 
-## Build & checks
+## Build, test, and checks
 
 ```bash
+bun run test:run
 bun run lint
+bun run format:check
 bun run build
 ```
 
+CI runs format check, lint, AI scan, unit tests, and build on pull requests and pushes to `main`.
+
 ## Project structure
 
-- `src/pages/**`: route-level composition (wouter routes render these)
-- `src/features/**`: app feature logic (React Query hooks, adapters, UI helpers)
-- `src/lib/**`: pure logic (no React imports) — GPA math, grade mappings, API client types
-- `src/components/ui/**`: shadcn primitives (generated)
-- `src/components/**`: app components (composition/wrappers around primitives)
+- `src/pages/**`: route-level composition and page wiring
+- `src/features/**`: feature logic (query hooks, adapters, feature components)
+- `src/lib/**`: pure logic and shared primitives (no React imports)
+- `src/components/ui/**`: generated shadcn primitives (treat as upstream-generated)
+- `src/components/**`: app-level wrappers and composition around UI primitives
 
-## UI stack (Tailwind + shadcn)
+## Cornell roster API and proxy flow
 
-- Tailwind v4 via `@tailwindcss/vite`
-- shadcn initialized with preset `bd1jr62c`
-- shadcn components live in `src/components/ui/*`
-  - do not customize these files directly; prefer composition/wrappers or theme tokens in `src/index.css`
+Cornell's roster API does not include CORS headers, so browser code must call relative `/api/*` endpoints only.
 
-## Cornell Roster API + Netlify proxy
-
-Cornell’s roster API does not provide CORS headers. The app calls the proxy path:
+Example request from the app:
 
 - `GET /api/search/classes.json?roster=SP26&subject=CS`
 
-On Netlify, this is proxied to the Cornell API origin using [`netlify.toml`](netlify.toml).
+In production, Netlify rewrites `/api/*` to `https://classes.cornell.edu/api/2.0/*` using `netlify.toml`.
 
-Reference: Netlify proxies/rewrites docs: `https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/`
+Reference: [Netlify rewrites and proxies](https://docs.netlify.com/manage/routing/redirects/rewrites-proxies/)
 
-## GPA policy (Cornell 4.3 scale)
+## GPA policy
 
-- Letter grades use Cornell’s **4.3 scale** (A+ = 4.3).
-- `S/U` grades are **excluded** from GPA.
+- Uses Cornell's 4.3 scale (`A+ = 4.3`)
+- Computes weighted GPA from quality points and graded credits
+- Excludes `S/U` from GPA
+- Ignores invalid credit inputs (for example non-finite or non-positive credits)
 
-## Cursor governance (rules + skill + hooks)
+## Testing scope
 
-- Rules live in `.cursor/rules/*.mdc` (architecture, shadcn guardrails, proxy-only API access, TS/React quality).
-- Project workflow skill: `.cursor/skills/gpa-frontend-workflow/SKILL.md`.
-- Hook: `.cursor/hooks/enforce-bun-only.sh` helps catch `npm`/`pnpm`/`yarn` usage (Bun-only repo).
-- Non-Cursor agents should follow `AGENTS.md`, which routes them to the same Cursor rules/skills as canonical policy.
+- Unit tests cover core GPA math in `src/lib/gpa/**`
+- CI enforces formatting, linting, tests, and build integrity
 
-## React Compiler
+## Contributing
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Use Bun commands only (`bun`, `bunx --bun`)
+- Keep API calls in browser code on `/api/*` (never direct Cornell origin fetches)
+- Do not customize `src/components/ui/*` directly
+- Prefer small, focused PRs with clear Conventional Commit messages
 
-## Expanding the ESLint configuration
+## Cursor governance
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from "eslint-plugin-react-x";
-import reactDom from "eslint-plugin-react-dom";
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+- Rules: `.cursor/rules/*.mdc`
+- Project workflow skill: `.cursor/skills/gpa-frontend-workflow/SKILL.md`
+- Hook: `.cursor/hooks/enforce-bun-only.sh` helps enforce Bun-only usage
+- Non-Cursor agents should follow `AGENTS.md` for canonical policy routing
