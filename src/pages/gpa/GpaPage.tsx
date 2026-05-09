@@ -464,6 +464,8 @@ export function GpaPage() {
   }, [searchParams]);
 
   React.useEffect(() => {
+    let toastTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     const storageKey = getSelectedCoursesStorageKey(roster);
     const parsedCourses = parseStoredSelectedCourses(
       localStorage.getItem(storageKey),
@@ -472,22 +474,25 @@ export function GpaPage() {
     if (parsedCourses == null) {
       setSelectedCourses([]);
       setLoadedRoster(roster);
-      return;
+    } else {
+      setSelectedCourses(parsedCourses);
+      setLoadedRoster(roster);
+
+      const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster];
+      hasLoadedRosterRef.current[roster] = true;
+
+      if (isFirstLoadForRoster && parsedCourses.length > 0) {
+        toastTimeoutId = setTimeout(() => {
+          toast.info("Loaded saved courses from this device.", {
+            description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
+          });
+        }, 0);
+      }
     }
 
-    setSelectedCourses(parsedCourses);
-    setLoadedRoster(roster);
-
-    const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster];
-    hasLoadedRosterRef.current[roster] = true;
-
-    if (isFirstLoadForRoster && parsedCourses.length > 0) {
-      setTimeout(() => {
-        toast.info("Loaded saved courses from this device.", {
-          description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
-        });
-      }, 0);
-    }
+    return () => {
+      if (toastTimeoutId !== undefined) clearTimeout(toastTimeoutId);
+    };
   }, [roster]);
 
   React.useEffect(() => {
