@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,9 @@ import {
 import {
   Popover,
   PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "sonner";
@@ -40,13 +44,40 @@ import {
 import {
   SelectedCoursesTable,
   type SelectedCourseRow,
+  type SortDirection,
+  type SortField,
+  type SortableField,
 } from "@/features/gpa/components/SelectedCoursesTable";
 import { computeCornellGpa, type GpaCourseInput } from "@/lib/gpa/computeGpa";
-import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades";
+import {
+  GRADE_OPTIONS,
+  LETTER_GRADE_POINTS,
+  type CourseGrade,
+  type LetterGrade,
+} from "@/lib/gpa/grades";
 
 const DEFAULT_ROSTER = "SP26";
 const DEFAULT_SUBJECT = "CS";
 const SELECTED_COURSES_STORAGE_PREFIX = "ofcourse-selected-courses";
+const SORT_PREFERENCE_STORAGE_PREFIX = "ofcourse-sort-preference";
+
+const SORT_FIELDS: readonly SortField[] = [
+  "none",
+  "course",
+  "credits",
+  "grade",
+];
+const SORT_DIRECTIONS: readonly SortDirection[] = ["asc", "desc"];
+
+type SortPreference = {
+  field: SortField;
+  direction: SortDirection;
+};
+
+const DEFAULT_SORT_PREFERENCE: SortPreference = {
+  field: "none",
+  direction: "asc",
+};
 
 type StoredSelectedCourseRow = {
   key: string;
@@ -57,6 +88,42 @@ type StoredSelectedCourseRow = {
 
 function getSelectedCoursesStorageKey(roster: string) {
   return `${SELECTED_COURSES_STORAGE_PREFIX}:${roster}`;
+}
+
+function getSortPreferenceStorageKey(roster: string) {
+  return `${SORT_PREFERENCE_STORAGE_PREFIX}:${roster}`;
+}
+
+function isSortField(value: unknown): value is SortField {
+  return (
+    typeof value === "string" &&
+    (SORT_FIELDS as readonly string[]).includes(value)
+  );
+}
+
+function isSortDirection(value: unknown): value is SortDirection {
+  return (
+    typeof value === "string" &&
+    (SORT_DIRECTIONS as readonly string[]).includes(value)
+  );
+}
+
+function parseStoredSortPreference(
+  value: string | null,
+): SortPreference | null {
+  if (!value) return null;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const maybe = parsed as Record<string, unknown>;
+    if (!isSortField(maybe.field)) return null;
+    if (!isSortDirection(maybe.direction)) return null;
+    return { field: maybe.field, direction: maybe.direction };
+  } catch {
+    return null;
+  }
 }
 
 function getColumnWidthCh(input: {
@@ -227,6 +294,14 @@ export function GpaPage() {
   const [loadedRoster, setLoadedRoster] = React.useState<string | null>(null);
   const hasLoadedRosterRef = React.useRef<Record<string, boolean>>({});
 
+  const [sortPreference, setSortPreference] = React.useState<SortPreference>(
+    DEFAULT_SORT_PREFERENCE,
+  );
+  const [loadedSortPreferenceRoster, setLoadedSortPreferenceRoster] =
+    React.useState<string | null>(null);
+
+  const [clearAllPopoverOpen, setClearAllPopoverOpen] = React.useState(false);
+
   const classesQuery = useCornellClassesByRosterAndSubjectQuery({
     roster,
     subject,
@@ -318,6 +393,52 @@ export function GpaPage() {
     return computeCornellGpa(inputs);
   }, [selectedCourses]);
 
+  const displayCourses = React.useMemo(() => {
+    if (sortPreference.field === "none") return selectedCourses;
+
+    const indexed = selectedCourses.map((course, index) => ({ course, index }));
+    const directionFactor = sortPreference.direction === "desc" ? -1 : 1;
+
+    function compareForField(a: SelectedCourseRow, b: SelectedCourseRow) {
+      switch (sortPreference.field) {
+        case "course": {
+          const aCode =
+            `${a.course.subject ?? ""} ${a.course.catalogNbr ?? ""}`.trim();
+          const bCode =
+            `${b.course.subject ?? ""} ${b.course.catalogNbr ?? ""}`.trim();
+          return aCode.localeCompare(bCode, undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+        }
+        case "credits":
+          return a.credits - b.credits;
+        case "grade":
+          return (
+            LETTER_GRADE_POINTS[a.grade as LetterGrade] -
+            LETTER_GRADE_POINTS[b.grade as LetterGrade]
+          );
+        default:
+          return 0;
+      }
+    }
+
+    indexed.sort((a, b) => {
+      // Grade sort: S/U always pushed to the end regardless of direction.
+      if (sortPreference.field === "grade") {
+        const aSu = a.course.grade === "S" || a.course.grade === "U";
+        const bSu = b.course.grade === "S" || b.course.grade === "U";
+        if (aSu !== bSu) return aSu ? 1 : -1;
+        if (aSu && bSu) return a.index - b.index;
+      }
+      const cmp = compareForField(a.course, b.course) * directionFactor;
+      if (cmp !== 0) return cmp;
+      return a.index - b.index;
+    });
+
+    return indexed.map((entry) => entry.course);
+  }, [selectedCourses, sortPreference]);
+
   React.useEffect(() => {
     const normalizedRoster = normalizeRoster(roster);
     const normalizedSubject = normalizeSubject(subjectInput);
@@ -343,6 +464,8 @@ export function GpaPage() {
   }, [searchParams]);
 
   React.useEffect(() => {
+    let toastTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
     const storageKey = getSelectedCoursesStorageKey(roster);
     const parsedCourses = parseStoredSelectedCourses(
       localStorage.getItem(storageKey),
@@ -351,22 +474,25 @@ export function GpaPage() {
     if (parsedCourses == null) {
       setSelectedCourses([]);
       setLoadedRoster(roster);
-      return;
+    } else {
+      setSelectedCourses(parsedCourses);
+      setLoadedRoster(roster);
+
+      const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster];
+      hasLoadedRosterRef.current[roster] = true;
+
+      if (isFirstLoadForRoster && parsedCourses.length > 0) {
+        toastTimeoutId = setTimeout(() => {
+          toast.info("Loaded saved courses from this device.", {
+            description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
+          });
+        }, 0);
+      }
     }
 
-    setSelectedCourses(parsedCourses);
-    setLoadedRoster(roster);
-
-    const isFirstLoadForRoster = !hasLoadedRosterRef.current[roster];
-    hasLoadedRosterRef.current[roster] = true;
-
-    if (isFirstLoadForRoster && parsedCourses.length > 0) {
-      setTimeout(() => {
-        toast.info("Loaded saved courses from this device.", {
-          description: `Loaded ${parsedCourses.length} course${parsedCourses.length === 1 ? "" : "s"} for ${roster}.`,
-        });
-      }, 0);
-    }
+    return () => {
+      if (toastTimeoutId !== undefined) clearTimeout(toastTimeoutId);
+    };
   }, [roster]);
 
   React.useEffect(() => {
@@ -375,6 +501,20 @@ export function GpaPage() {
     const storageKey = getSelectedCoursesStorageKey(roster);
     localStorage.setItem(storageKey, JSON.stringify(selectedCourses));
   }, [loadedRoster, roster, selectedCourses]);
+
+  React.useEffect(() => {
+    const storageKey = getSortPreferenceStorageKey(roster);
+    const parsed = parseStoredSortPreference(localStorage.getItem(storageKey));
+    setSortPreference(parsed ?? DEFAULT_SORT_PREFERENCE);
+    setLoadedSortPreferenceRoster(roster);
+  }, [roster]);
+
+  React.useEffect(() => {
+    if (loadedSortPreferenceRoster !== roster) return;
+
+    const storageKey = getSortPreferenceStorageKey(roster);
+    localStorage.setItem(storageKey, JSON.stringify(sortPreference));
+  }, [loadedSortPreferenceRoster, roster, sortPreference]);
 
   function addCourse(course: CornellClassSummary) {
     const key =
@@ -413,6 +553,27 @@ export function GpaPage() {
         course.key === key ? { ...course, grade } : course,
       ),
     );
+  }
+
+  function clearAllCourses() {
+    const removedCount = selectedCourses.length;
+    if (removedCount === 0) return;
+
+    setSelectedCourses([]);
+    toast.success(
+      `Cleared ${removedCount} course${removedCount === 1 ? "" : "s"} from ${roster}.`,
+    );
+  }
+
+  function handleHeaderSortClick(field: SortableField) {
+    setSortPreference((prev) => {
+      // Different column: activate clicked column starting at ascending.
+      if (prev.field !== field) return { field, direction: "asc" };
+      // Same column ascending: switch to descending.
+      if (prev.direction === "asc") return { field, direction: "desc" };
+      // Same column descending: cycle back to no active sort.
+      return DEFAULT_SORT_PREFERENCE;
+    });
   }
 
   return (
@@ -708,7 +869,10 @@ export function GpaPage() {
                 </div>
               ) : (
                 <SelectedCoursesTable
-                  courses={selectedCourses}
+                  courses={displayCourses}
+                  sortField={sortPreference.field}
+                  sortDirection={sortPreference.direction}
+                  onSortFieldClick={handleHeaderSortClick}
                   onCreditsChange={updateCourseCredits}
                   onGradeChange={updateCourseGrade}
                   onRemove={removeCourse}
@@ -726,6 +890,58 @@ export function GpaPage() {
                 </span>{" "}
                 · S/U excluded from GPA.
               </div>
+
+              {selectedCourses.length > 0 ? (
+                <div className="flex justify-center">
+                  <Popover
+                    open={clearAllPopoverOpen}
+                    onOpenChange={setClearAllPopoverOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={selectedCourses.length === 0}
+                      >
+                        <Trash2Icon />
+                        Clear all
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end">
+                      <PopoverHeader>
+                        <PopoverTitle>Clear all courses?</PopoverTitle>
+                        <PopoverDescription>
+                          This removes {selectedCourses.length} course
+                          {selectedCourses.length === 1 ? "" : "s"} from{" "}
+                          {roster}. Other rosters are unaffected.
+                        </PopoverDescription>
+                      </PopoverHeader>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setClearAllPopoverOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            clearAllCourses();
+                            setClearAllPopoverOpen(false);
+                          }}
+                        >
+                          Clear all
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              ) : null}
             </div>
           </div>
         </CardContent>

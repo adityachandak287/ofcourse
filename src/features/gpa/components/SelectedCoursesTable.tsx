@@ -1,4 +1,4 @@
-import { Trash2Icon } from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCornellCourseLabel } from "@/features/courses/courseLabel";
+import { cn } from "@/lib/utils";
 import type { CornellClassSummary } from "@/lib/api/cornellRosterApiTypes";
 import { GRADE_OPTIONS, type CourseGrade } from "@/lib/gpa/grades";
 
@@ -28,15 +29,72 @@ export type SelectedCourseRow = {
   grade: CourseGrade;
 };
 
+export type SortField = "none" | "course" | "credits" | "grade";
+export type SortableField = Exclude<SortField, "none">;
+export type SortDirection = "asc" | "desc";
+
 type SelectedCoursesTableProps = {
   courses: readonly SelectedCourseRow[];
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSortFieldClick: (field: SortableField) => void;
   onCreditsChange: (key: string, value: string) => void;
   onGradeChange: (key: string, grade: CourseGrade) => void;
   onRemove: (key: string) => void;
 };
 
+function getAriaSort(
+  field: SortableField,
+  activeField: SortField,
+  direction: SortDirection,
+): "ascending" | "descending" | "none" {
+  if (activeField !== field) return "none";
+  return direction === "asc" ? "ascending" : "descending";
+}
+
+function SortableHeaderButton({
+  field,
+  label,
+  activeField,
+  direction,
+  align,
+  onClick,
+}: {
+  field: SortableField;
+  label: string;
+  activeField: SortField;
+  direction: SortDirection;
+  align: "start" | "center";
+  onClick: (field: SortableField) => void;
+}) {
+  const isActive = activeField === field;
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(field)}
+      className={cn(
+        "inline-flex w-full cursor-pointer items-center gap-1 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+        align === "center" ? "justify-center" : "justify-start",
+        isActive ? "text-foreground" : "",
+      )}
+    >
+      <span>{label}</span>
+      {isActive ? (
+        direction === "asc" ? (
+          <ArrowUpIcon className="size-3" aria-hidden />
+        ) : (
+          <ArrowDownIcon className="size-3" aria-hidden />
+        )
+      ) : null}
+    </button>
+  );
+}
+
 export function SelectedCoursesTable({
   courses,
+  sortField,
+  sortDirection,
+  onSortFieldClick,
   onCreditsChange,
   onGradeChange,
   onRemove,
@@ -45,9 +103,45 @@ export function SelectedCoursesTable({
     <Table className="table-fixed text-xs sm:text-sm">
       <TableHeader>
         <TableRow>
-          <TableHead className="p-1.5">Course</TableHead>
-          <TableHead className="w-16 p-1.5 text-center">Credits</TableHead>
-          <TableHead className="w-16 p-1.5 text-center">Grade</TableHead>
+          <TableHead
+            className="p-1.5"
+            aria-sort={getAriaSort("course", sortField, sortDirection)}
+          >
+            <SortableHeaderButton
+              field="course"
+              label="Course"
+              activeField={sortField}
+              direction={sortDirection}
+              align="start"
+              onClick={onSortFieldClick}
+            />
+          </TableHead>
+          <TableHead
+            className="w-18 p-1.5 text-center"
+            aria-sort={getAriaSort("credits", sortField, sortDirection)}
+          >
+            <SortableHeaderButton
+              field="credits"
+              label="Credits"
+              activeField={sortField}
+              direction={sortDirection}
+              align="center"
+              onClick={onSortFieldClick}
+            />
+          </TableHead>
+          <TableHead
+            className="w-16 p-1.5 text-center"
+            aria-sort={getAriaSort("grade", sortField, sortDirection)}
+          >
+            <SortableHeaderButton
+              field="grade"
+              label="Grade"
+              activeField={sortField}
+              direction={sortDirection}
+              align="center"
+              onClick={onSortFieldClick}
+            />
+          </TableHead>
           <TableHead className="w-10 p-1.5 text-right">
             <span className="sr-only">Actions</span>
           </TableHead>
